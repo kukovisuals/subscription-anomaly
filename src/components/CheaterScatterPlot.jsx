@@ -12,6 +12,7 @@ function CheaterScatterPlot({ data, width, height }) {
     const svgRef = useRef(null);
 
     useEffect(() => {
+        // console.log(data);
         if (!data || !data.length) {
             console.warn("No data available for the scatter plot.");
             return;
@@ -31,6 +32,12 @@ function CheaterScatterPlot({ data, width, height }) {
                 items: order.items,
             };
         });
+
+        // console.log("nsd", scatterData)
+
+        // const allTypesSubscriptions = scatterData[scatterData.length - 1].items[0].allSubsType
+
+        // console.log('all types ', allTypesSubscriptions)
 
         // 2) Setup canvas (margins, widths, etc.)
         const margin = { top: 20, right: 20, bottom: 50, left: 60 };
