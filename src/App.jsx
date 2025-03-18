@@ -69,9 +69,9 @@ function App() {
       <h1>Suspicious Orders Flow</h1>
       <CheaterScatterPlot data={sankeyData} width={1500} height={700} />
       <h1>Bralettes in Subscription</h1>
-      <CheaterSankeyDiagram data={sankeyDataBraBalconette} width={1500} height={1000} isSet={true}/>
+      <CheaterSankeyDiagram data={sankeyDataBraBalconette} pantyData={sankeyDataOther} width={1500} height={1000} isSet={true}/>
       <h1>Panties in Subscription</h1>
-      <CheaterSankeyDiagram data={sankeyDataOther} width={1500} height={1000} isSet={false}/>
+      <CheaterSankeyDiagram data={sankeyDataOther} pantyData={sankeyDataOther} width={1500} height={1000} isSet={false}/>
     </div>
   );
 }

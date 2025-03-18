@@ -38,7 +38,7 @@ export async function subscriptionSales(files) {
         variantSize = parts[2]?.trim() || "Unknown";
         lastSubs = parts[0]?.trim() || "Unknown";
       } else {
-        subsType = lastSubs
+        // subsType = lastSubs
       }
       // console.log(d)
       // if(subsType == "EBY Subscription"){

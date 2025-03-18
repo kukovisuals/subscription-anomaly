@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { sankey, sankeyLinkHorizontal } from "d3-sankey";
 
-function CheaterSankeyDiagram({ data, width, height, isSet }) {
+function CheaterSankeyDiagram({ data, pantyData, width, height, isSet }) {
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -10,6 +10,7 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
       console.warn("No valid data for the Sankey diagram.");
       return;
     }
+
 
     // 1) MARGINS & DIMENSIONS
     const margin = { top: 20, right: 20, bottom: 20, left: 20 };
@@ -34,8 +35,8 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
     } else {
         allSubsType = data[0].allSubsType.filter(d => !d.includes("Set")) || [];
     }
-    const subscriptionSet = new Set(allSubsType); // for easy lookups
-    console.log(subscriptionSet)
+    // const subscriptionSet = new Set(allSubsType); // for easy lookups
+    // console.log(subscriptionSet)
 
     // 3) GATHER ALL DISTINCT **NON-SUBSCRIPTION** PRODUCTS (RIGHT)
     //    Exclude anything that contains these keywords in its name:
@@ -48,6 +49,8 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
     ];
 
     const productNamesSet = new Set();
+    const pantyNameSet = new Set();
+    
     data.forEach((order) => {
       order.items.forEach((item) => {
         const { name } = item;
@@ -63,32 +66,32 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
       });
     });
 
-    // Optional debugging: log every item that we do / don't skip
-    // (Uncomment these lines if you want to see the filter in action in console.)
-    
-    // console.log("=== FILTERING PRODUCTS ===");
-    // data.forEach((order) => {
-    //   order.items.forEach((item) => {
-    //     const { name } = item;
-    //     if (!name) return;
-    //     const lowerName = name.trim().toLowerCase();
-    //     const shouldSkip = SKIP_KEYWORDS.some((kw) => lowerName.includes(kw));
-    //     console.log(
-    //       shouldSkip
-    //         ? `SKIPPING:  ${name}`
-    //         : `INCLUDING: ${name}`
-    //     );
-    //   });
-    // });
-    
+    pantyData.forEach((order) => {
+      order.items.forEach((item) => {
+        const { name } = item;
+        if (!name) return; // guard against undefined name
+
+        const lowerName = name.trim().toLowerCase();
+
+        // Decide if we skip this name because it contains any unwanted keyword
+        const shouldSkip = SKIP_KEYWORDS.some((kw) => lowerName.includes(kw));
+        if (!shouldSkip) {
+          pantyNameSet.add(name);
+        }
+      });
+    });
 
     const productNames = Array.from(productNamesSet);
+    
+    const productPantyNames = Array.from(pantyNameSet);
 
     // 4) CREATE NODES
     //    Left nodes = subscription types
     const sankeyNodesLeft = allSubsType.map((st) => ({ name: st }));
     //    Right nodes = filtered product names
     const sankeyNodesRight = productNames.map((pn) => ({ name: pn }));
+
+    // const sankeyNodesPanty = productPantyNames.map((pn) => ({ name: pn }));
     // Combine
     const allNodes = [...sankeyNodesLeft, ...sankeyNodesRight];
 
@@ -102,16 +105,50 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
       productNameToIndex.set(pn, allSubsType.length + i);
     });
 
+    // panties come after bras
+    const pantyIndexOffset = productNameToIndex + sankeyNodesRight.length;
+    const pantyNameToIndex = new Map();
+    productPantyNames.forEach((p, i) => {
+      pantyNameToIndex.set(p, pantyIndexOffset + i);
+    });
+
+    const isBra = (name) => {
+      if (!name) return false;
+      const nm = name.toLowerCase();
+      return nm.includes("bra") || nm.includes("balconette");
+    };
+
+    const isPanty = (name) => {
+      if (!name) return false;
+      const nm = name.toLowerCase();
+      return !nm.includes("bra") || nm.includes("balconette");
+    };
+
     // 5) BUILD LINKS
     const sankeyLinks = [];
     data.forEach((order) => {
+
+      // Gather the bras in this order
+      const orderBras = [];
+      // Gather the panties in this order
+      const orderPanties = [];
+      
+      order.items.forEach((item) => {
+        const { name, quantity = 1 } = item;
+        if (!name) return;
+        if (isBra(name) && productNameToIndex.has(name.trim())) {
+          orderBras.push({ name: name.trim(), quantity });
+        } else if (isPanty(name) && pantyNameToIndex.has(name.trim())) {
+          orderPanties.push({ name: name.trim(), quantity });
+        }
+      });
+
       order.items.forEach((item) => {
         const { subsType, name, quantity = 1 } = item;
         if (!subsType || !name) return;
 
-        // Link only if subType is recognized AND the name was included on right
         if (subsTypeToIndex.has(subsType) && productNameToIndex.has(name)) {
-            console.log("whats the name", name)
+            // console.log("whats the name", name)
           sankeyLinks.push({
             source: subsTypeToIndex.get(subsType),
             target: productNameToIndex.get(name),
@@ -119,6 +156,16 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
           });
         }
       });
+
+      // orderBras.forEach((b) => {
+      //   orderPanties.forEach((p) => {
+      //     sankeyLinks.push({
+      //       source: productNameToIndex.get(b.name),
+      //       target: pantyNameToIndex.get(p.name),
+      //       value: p.quantity,
+      //     });
+      //   });
+      // });
     });
 
     // 6) PREPARE SANKEY LAYOUT
