@@ -1,6 +1,6 @@
 import { fileOrders, onlyProducts, landingPageArrs } from './utilities/allFiles';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { productSales, subscriptionSales, landingPages } from './utilities/allDataObjects';
 // import CheaterSankeyChart from "./components/CheaterSankeyChart";
 import CheaterScatterPlot from './components/CheaterScatterPlot';
@@ -14,8 +14,12 @@ function App() {
   const [productData, setProductData] = useState([]);
   const [landingPagesCn, setLandingPagesCn] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    if (!isFirstRender.current) return; // Ensures it runs only once
+    isFirstRender.current = false;
+
     async function loadData() {
       setLoading(true);
       try {
@@ -25,13 +29,6 @@ function App() {
         setSankeyData(suspiciousOrders);
         setProductData(productOrders);
         setLandingPagesCn(landingPagesCsv);
-        
-        // console.log(suspiciousOrders)
-        // console.log('product data below')
-        // console.log(productOrders);
-
-        // console.log('Landing Pages')
-        // console.log(productOrders);
       } catch (err) {
         console.error("Error loading data:", err);
       } finally {
@@ -43,22 +40,6 @@ function App() {
   }, []);
 
   if (loading) return <div>Loading data...</div>;
-
-  // Filter products for Sankey Diagrams
-  const sankeyDataBraBalconette = sankeyData.map(order => ({
-    ...order,
-    items: order.items.filter(item =>
-      item.name.toLowerCase().includes("bra") || item.name.toLowerCase().includes("balconette")
-    ),
-  })).filter(order => order.items.length > 0); // Remove orders with no valid items
-
-  const sankeyDataOther = sankeyData.map(order => ({
-    ...order,
-    items: order.items.filter(item =>
-      !item.name.toLowerCase().includes("bra") && !item.name.toLowerCase().includes("balconette")
-    ),
-  })).filter(order => order.items.length > 0); // Remove orders with no valid items
-
 
   return (
     <div className="app-container">

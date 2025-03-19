@@ -37,30 +37,30 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
 
     const SANKY_SUB_RULES = {
       "Custom Relief Bra Set Subscription Box": (name) => {
-        name.includes("Relief Bra") && !SKIP_KEYWORDS.some((kw) => {
-          console.log(name.toLowerCase().includes(kw))
-        })
+        // name.includes("Relief Bra") && !SKIP_KEYWORDS.some((kw) => {
+          // console.log(name.toLowerCase().includes(kw))
+        // })
         return name.includes("Relief Bra") && !SKIP_KEYWORDS.some((kw) => name.toLowerCase().includes(kw))
       },
 
       "Custom Wireless Bra Set Subscription Box": (name) => {
-        name.includes("Bralette") && !SKIP_KEYWORDS.some((kw) => {
-          console.log(name.toLowerCase().includes(kw))
-        })
+        // name.includes("Bralette") && !SKIP_KEYWORDS.some((kw) => {
+        // console.log(name.toLowerCase().includes(kw))
+        // })
         return name.includes("Bralette") && !SKIP_KEYWORDS.some((kw) => name.toLowerCase().includes(kw))
       },
 
       "Custom Support Bra Set Subscription Box": (name) => {
-        name.includes("Bralette") && !SKIP_KEYWORDS.some((kw) => {
-          console.log(name.toLowerCase().includes(kw))
-        })
+        // name.includes("Bralette") && !SKIP_KEYWORDS.some((kw) => {
+        // console.log(name.toLowerCase().includes(kw))
+        // })
         return name.includes("Bralette") && !SKIP_KEYWORDS.some((kw) => name.toLowerCase().includes(kw))
       },
 
       "Custom Sheer Bra Set Subscription Box": (name) => {
-        name.includes("Mesh") && !SKIP_KEYWORDS.some((kw) => {
-          console.log(name.toLowerCase().includes(kw))
-        })
+        // name.includes("Mesh") && !SKIP_KEYWORDS.some((kw) => {
+        // console.log(name.toLowerCase().includes(kw))
+        // })
         return (name.includes("Mesh") && name.includes("Bralette")) && !SKIP_KEYWORDS.some((kw) => name.toLowerCase().includes(kw))
       }
 
@@ -74,13 +74,17 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
 
     // 2) Identify all bras and panties
     const isBra = (name) => name && (name.includes("Bra") || name.includes("Bralette"));
-    const isPanty = (name) => name && (name.includes("Panty") || name.includes("Brief") || name.includes("Thong"));
+    const isPanty = (name) => name && (name.includes("Panty") || name.includes("Brief") || name.includes("Thong") || name.includes("High") || name.includes("Cheeky"));
 
     const braNamesSet = new Set();
     const pantyNamesSet = new Set();
+    const otherNamesSet = new Set();
 
     // Populate bras and panties
     data.forEach((order) => {
+      let braArr = []
+      let pantyArr = []
+
       order.items.forEach((item) => {
         const { name } = item;
         const lowerName = name.trim().toLowerCase();
@@ -88,20 +92,32 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
         // Decide if we skip this name because it contains any unwanted keyword
         const shouldSkip = SKIP_KEYWORDS.some((kw) => lowerName.includes(kw));
         if (!shouldSkip) {
-          if (isBra(name)) braNamesSet.add(name.trim());
-          if (isPanty(name)) pantyNamesSet.add(name.trim());
+          if (isBra(name)) {
+            braNamesSet.add(name.trim());
+            braArr.push(name.trim());
+          }
+          if (isPanty(name)) {
+            pantyNamesSet.add(name.trim());
+            pantyArr.push(name.trim());
+          }
         }
       });
+      // Keep only the additional items (excluding first bra and first panty)
+      braArr.slice(1).forEach((b) => otherNamesSet.add(b)); // Remaining bras
+      pantyArr.slice(1).forEach((p) => otherNamesSet.add(p)); // Remaining panties
+
     });
 
     const braNames = Array.from(braNamesSet);
     const pantyNames = Array.from(pantyNamesSet);
+    const otherNames = Array.from(otherNamesSet);
 
     const sankeyNodesRight = braNames.map((pn) => ({ name: pn }));
     const sankeyNodesPanty = pantyNames.map((pn) => ({ name: pn }));
+    const sankeyNodesOther = otherNames.map((pn) => ({ name: pn }));
 
     // Combine nodes
-    const allNodes = [...sankeyNodesLeft, ...sankeyNodesRight, ...sankeyNodesPanty];
+    const allNodes = [...sankeyNodesLeft, ...sankeyNodesRight, ...sankeyNodesPanty, ...sankeyNodesOther];
 
     // Build index maps
     const subsTypeToIndex = new Map();
@@ -115,83 +131,141 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
     const pantyNameToIndex = new Map();
     pantyNames.forEach((p, i) => pantyNameToIndex.set(p, pantyIndexOffset + i));
 
-    console.log("Panty Index Map:", pantyNameToIndex);
+    const additionalItemsNodeIndex = pantyIndexOffset + sankeyNodesPanty.length;
+
+    const additionalItemToIndex = new Map();
+    otherNames.forEach((item, i) => additionalItemToIndex.set(item, additionalItemsNodeIndex + 1 + i));
 
 
+    console.log("------------------------------------------------------------")
+    console.log("All Sankey Nodes:", allNodes.map((n, i) => ({ index: i, name: n.name })));
+    console.log("Missing Index:", additionalItemToIndex);
+    console.log("------------------------------------------------------------")
 
-    // 3) Build links following the correct order
-    // const sankeyLinks = [];
-    // data.forEach((order) => {
-    //   order.items.forEach((item) => {
-    //     const { subsType, name, quantity = 1 } = item;
-    //     if (!subsType || !name) return;
 
-    //     // Step 1: Get the correct bra that belongs to the subscription
-    //     const braMatchFn = SANKY_SUB_RULES[subsType];
-    //     const matchingBra = order.items.find(
-    //       (i) => braMatchFn && braMatchFn(i.name) && isBra(i.name) && !SKIP_KEYWORDS.some((kw) => i.name.toLowerCase().includes(kw))
-    //     );
-
-    //     // Step 2: Find the first panty item
-    //     const firstPanty = order.items.find(i => isPanty(i.name));
-
-    //     if (subsType === "Custom Sheer Bra Set Subscription Box") {
-    //       console.log(`Sheer Bra Set Match:`, { subsType, matchingBra });
-    //     }
-
-    //     if (!matchingBra || !firstPanty) return; // Skip if any step is missing
-
-    //     const subIndex = subsTypeToIndex.get(subsType);
-    //     const braIndex = braNameToIndex.get(matchingBra.name);
-    //     const pantyIndex = pantyNameToIndex.get(firstPanty.name);
-
-    //     if (subIndex !== undefined && braIndex !== undefined) {
-    //       console.log(`Link: ${subsType} → ${matchingBra.name}`);
-    //       sankeyLinks.push({ source: subIndex, target: braIndex, value: quantity });
-    //     }
-
-    //     if (braIndex !== undefined && pantyIndex !== undefined) {
-    //       console.log(`Link: ${matchingBra.name} → ${firstPanty.name}`);
-    //       sankeyLinks.push({ source: braIndex, target: pantyIndex, value: quantity });
-    //     }
-    //   });
-    // });
     const sankeyLinks = [];
+
     data.forEach((order) => {
-      order.items.forEach((item) => {
-        const { subsType, name, quantity = 1 } = item;
-        if (!subsType || !name) return;
+      // We assume there's at least one subscription type with "Set"
+      // If there are multiple, pick whichever you want or loop them
+      const subscriptionType = order.allSubsType.find((t) => t.includes("Set"));
+      if (!subscriptionType) {
+        return; // skip if no subscription
+      }
 
-        // Step 1: Get the first matching "Relief Bra"
-        const braMatchFn = SANKY_SUB_RULES[subsType];
-        const firstMatchingBra = order.items.find(
-          (i) => braMatchFn && braMatchFn(i.name) && isBra(i.name) && !SKIP_KEYWORDS.some((kw) => i.name.includes(kw))
-        );
+      const subIndex = subsTypeToIndex.get(subscriptionType);
+      if (subIndex === undefined) {
+        return;
+      }
 
-        // Step 2: Collect all additional products (bras, panties, briefs, etc.)
-        const additionalProducts = order.items.filter(
-          (i) => i.name !== firstMatchingBra?.name // Exclude the first matching bra
-        );
+      // 1) Find the "first bra" that matches the subscription’s bra rule
+      const braMatchFn = SANKY_SUB_RULES[subscriptionType];
+      const firstMatchingBra = order.items.find(
+        (i) =>
+          braMatchFn &&
+          braMatchFn(i.name) &&
+          isBra(i.name) &&
+          !SKIP_KEYWORDS.some((kw) => i.name.toLowerCase().includes(kw))
+      );
 
-        // Step 3: Get the indexes for the first matching bra
-        const subIndex = subsTypeToIndex.get(subsType);
-        const braIndex = firstMatchingBra ? braNameToIndex.get(firstMatchingBra.name) : undefined;
+      // 2) Find the "first panty"
+      const firstMatchingPanty = order.items.find(
+        (i) =>
+          isPanty(i.name) &&
+          !SKIP_KEYWORDS.some((kw) => i.name.toLowerCase().includes(kw))
+      );
 
-        // Step 4: Create the first main link
-        if (subIndex !== undefined && braIndex !== undefined) {
-          console.log(`Primary Link: ${subsType} → ${firstMatchingBra.name}`);
-          sankeyLinks.push({ source: subIndex, target: braIndex, value: quantity });
+      // If we found a bra, link Subscription → that bra
+      let braNodeIndex;
+      if (firstMatchingBra) {
+        braNodeIndex = braNameToIndex.get(firstMatchingBra.name);
+        if (braNodeIndex !== undefined) {
+          sankeyLinks.push({
+            source: subIndex,
+            target: braNodeIndex,
+            value: firstMatchingBra.quantity || 1,
+          });
         }
+      }
 
-        // Step 5: Connect all additional products to the first relief bra
-        additionalProducts.forEach((prod) => {
-          const prodIndex = pantyNameToIndex.get(prod.name) || braNameToIndex.get(prod.name);
-          if (braIndex !== undefined && prodIndex !== undefined) {
-            console.log(`Additional Link: ${firstMatchingBra.name} → ${prod.name}`);
-            sankeyLinks.push({ source: braIndex, target: prodIndex, value: prod.quantity });
+      // If we found both bra + panty, link Bra → Panty
+      let pantyNodeIndex;
+      if (firstMatchingBra && firstMatchingPanty && braNodeIndex !== undefined) {
+        pantyNodeIndex = pantyNameToIndex.get(firstMatchingPanty.name);
+        if (pantyNodeIndex !== undefined) {
+          sankeyLinks.push({
+            source: braNodeIndex,
+            target: pantyNodeIndex,
+            value: firstMatchingPanty.quantity || 1,
+          });
+        }
+      }
+
+      // 3) “Other” leftover items (beyond that first bra & panty).
+      //    Link Panty → each leftover item
+      if (pantyNodeIndex !== undefined) {
+        // Exclude the subscription item, the first bra, and the first panty
+        const leftoverItems = order.items.filter((prod) => {
+          const wasFirstBra = prod.name === firstMatchingBra?.name;
+          const wasFirstPanty = prod.name === firstMatchingPanty?.name;
+          const isSubscription = prod.name.toLowerCase().includes("subscription");
+          const isKeywordSkipped = SKIP_KEYWORDS.some((kw) => prod.name.toLowerCase().includes(kw));
+          // const isAlreadyCountedAsBra = braNameToIndex.has(prod.name);
+
+          // if (wasFirstBra) console.log("Skipping as first bra:", prod.name);
+          // if (wasFirstPanty) console.log("Skipping as first panty:", prod.name);
+          // if (isSubscription) console.log("Skipping as subscription:", prod.name);
+          // if (isKeywordSkipped) console.log("Skipping due to keyword:", prod.name);
+          // if (isAlreadyCountedAsBra) console.log("Skipping because it's already a bra:", prod.name);
+
+          if (wasFirstBra || wasFirstPanty || isSubscription || isKeywordSkipped) {
+            return false;
           }
+          return true;
         });
-      });
+
+
+        // leftoverItems.forEach((extraItem) => {
+        //   console.log("Processing Extra Item:", extraItem.name);
+
+        //   // Check if it's already a known bra
+        //   const leftoverBraIdx = braNameToIndex.get(extraItem.name);
+        //   if (leftoverBraIdx !== undefined) {
+        //     console.log(`✔ Found in braNameToIndex: ${extraItem.name} → Index ${leftoverBraIdx}`);
+        //   }
+
+        //   // Check if it's already a known panty
+        //   const leftoverPantyIdx = pantyNameToIndex.get(extraItem.name);
+        //   if (leftoverPantyIdx !== undefined) {
+        //     console.log(`✔ Found in pantyNameToIndex: ${extraItem.name} → Index ${leftoverPantyIdx}`);
+        //   }
+
+        //   // Check if it's an "other" product
+        //   const leftoverOtherIdx = additionalItemToIndex.get(extraItem.name);
+        //   if (leftoverOtherIdx !== undefined) {
+        //     console.log(`✔ Found in additionalItemToIndex: ${extraItem.name} → Index ${leftoverOtherIdx}`);
+        //   }
+
+        //   // Assigning the final target index
+        //   const finalTargetIndex = leftoverPantyIdx ?? leftoverOtherIdx ?? leftoverBraIdx;
+
+
+        //   console.log(`🔍 Final Target Index for ${extraItem.name}:`, finalTargetIndex);
+
+        //   if (finalTargetIndex !== undefined) {
+        //     console.log(`✅ Adding link: ${firstMatchingPanty.name} (${pantyNodeIndex}) → ${extraItem.name} (${finalTargetIndex})`);
+        //     sankeyLinks.push({
+        //       source: pantyNodeIndex,
+        //       target: finalTargetIndex,
+        //       value: extraItem.quantity || 1,
+        //     });
+        //   } else {
+        //     console.warn(`⚠ WARNING: No valid index found for extra item: ${extraItem.name}`);
+        //   }
+
+        // });
+
+      }
     });
 
 

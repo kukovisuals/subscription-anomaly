@@ -76,7 +76,7 @@ export async function subscriptionSales(files) {
       item.name.toLowerCase().includes("quarterly")
     );
     let hasSetSubscription = items.some((item) =>
-      item.name.toLowerCase().includes("subscription")
+      item.name.toLowerCase().includes("set")
     );
     let othersSubs = items.some((item) =>
       item.name.toLowerCase().includes("semi annual") || item.name.toLowerCase().includes("renew")
@@ -89,15 +89,21 @@ export async function subscriptionSales(files) {
 
     
     
-    if( (hasSetSubscription || hasPantySubscription || othersSubs ) ){ // || hasFreeBraCode)){ && len < 2){
+    if( (hasSetSubscription ) ){ // || hasFreeBraCode)){ && len < 2){
       // console.log("data before filtering Subscription", items)
       // if(hasSetSubscription){
       //   debugger
       // }
+      
+      const newCheck = items.filter(d => d.name.includes("Subscription"))
+
 
       for(const subItem of items){
-        const subsTypeOriginal = items[0].subsType
+        const subsTypeOriginal = newCheck[0].subsType
         subItem.subsType = subsTypeOriginal
+        // if(subItem.name.includes("Custom Relief Bra Set Subscription Box - md / md")){
+        //   debugger
+        // }
       }
 
       // console.log("After", items)
