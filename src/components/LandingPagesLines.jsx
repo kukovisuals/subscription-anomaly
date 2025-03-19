@@ -100,9 +100,9 @@ function LandingPagesLine({ data, containerId }) {
         // svg.append("g")
         // .call(d3.axisLeft(y));
         const myColors = [
-            "#015958", // Vibrant Red FF006E verde 015958
-            "#BFBFBF", // Orange BFBFBF
-            "#BFBFBF", // Yellow
+            "#BFBFBF", // Vibrant Red FF006E verde 015958
+            "#015958", // Orange BFBFBF
+            "#FF006E", // Yellow
             "#BFBFBF", // Teal 3498DB
             "#BFBFBF", // Deep Blue E63946
             "#BFBFBF", // Deep Purple
@@ -160,6 +160,15 @@ function LandingPagesLine({ data, containerId }) {
 
         // 1️⃣ Append the right Y-axis for CVR
         svg.append("g").call(d3.axisLeft(yRight)); // Call the right-side axis
+
+        svg.append("text")
+            .attr("x", -height / 2) // Center the label along the axis
+            .attr("y", -40) // Move it away from the axis for spacing
+            .attr("transform", "rotate(-90)") // Rotate the text vertically
+            .attr("text-anchor", "middle") // Center the text alignment
+            .style("font-size", "14px")
+            .style("fill", "#000") // Change color if needed
+            .text("CVR %"); // Set the label text
 
         // 1️⃣ Create a tooltip div (hidden by default)
         const tooltip = d3
@@ -237,8 +246,8 @@ function LandingPagesLine({ data, containerId }) {
 
             // Sort values by date to ensure the last data point is correct
             if (
-                name === "/collections/bralettes-for-women" 
-                // name === "/products/nude-relief-bra" ||
+                name === "/collections/bralettes-for-women" ||
+                name === "/products/nude-bralette" 
                 // name === "/collections/buy-2-get-1-free-bras"
             ) {
                 // Sort values by date to ensure we get the last data point

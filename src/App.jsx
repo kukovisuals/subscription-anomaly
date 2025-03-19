@@ -63,15 +63,16 @@ function App() {
   return (
     <div className="app-container">
       <StackedBars data={productData} />
+      <h2>Landing pages with cart sessions over 100 per day.</h2>
       <LandingPagesLine data={landingPagesCn.filter((d) => d.cartAdditions > 100 && d.name != "/")}  containerId="chart-high"/>
       <LandingPagesLine data={landingPagesCn.filter((d) => d.cartAdditions < 100 && d.cartAdditions > 50)}  containerId="chart-mid"/>
       <LandingPagesLine data={landingPagesCn.filter((d) => d.cartAdditions < 50 && d.cartAdditions > 10)}  containerId="chart-low"/>
-      <h1>Suspicious Orders Flow</h1>
+      <h2>Suspicious Orders Flow</h2>
       <CheaterScatterPlot data={sankeyData} width={1500} height={700} />
-      <h1>Bralettes in Subscription</h1>
-      <CheaterSankeyDiagram data={sankeyDataBraBalconette} pantyData={sankeyDataOther} width={1500} height={1000} isSet={true}/>
-      <h1>Panties in Subscription</h1>
-      <CheaterSankeyDiagram data={sankeyDataOther} pantyData={sankeyDataOther} width={1500} height={1000} isSet={false}/>
+      <h2>Products Bought - Set Subscription</h2>
+      <CheaterSankeyDiagram data={sankeyData} width={1500} height={1000} isSet={true}/>
+      {/* <h1>Panties in Subscription</h1>
+      <CheaterSankeyDiagram data={sankeyDataOther} width={1500} height={1000} isSet={false}/> */}
     </div>
   );
 }

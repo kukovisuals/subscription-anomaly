@@ -89,8 +89,11 @@ export async function subscriptionSales(files) {
 
     
     
-    if( (hasSetSubscription || hasPantySubscription || othersSubs )){ // || hasFreeBraCode)){ && len < 2){
+    if( (hasSetSubscription || hasPantySubscription || othersSubs ) ){ // || hasFreeBraCode)){ && len < 2){
       // console.log("data before filtering Subscription", items)
+      // if(hasSetSubscription){
+      //   debugger
+      // }
 
       for(const subItem of items){
         const subsTypeOriginal = items[0].subsType
