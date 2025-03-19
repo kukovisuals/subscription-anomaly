@@ -22,16 +22,16 @@ export async function subscriptionSales(files) {
       // Extract product details
       const parts = d["Lineitem name"]?.split(" - ") || [];
       let name = parts[0]?.trim() || "Unknown";
-      let subsType = null 
+      let subsType = null
       let variantSize = parts[1]?.trim() || "Unknown";
 
-      
-      if(d["Lineitem name"].includes("Subscription") && d["Lineitem name"].includes(" / ")){
+
+      if (d["Lineitem name"].includes("Subscription") && d["Lineitem name"].includes(" / ")) {
         name = d["Lineitem name"]
         subsType = parts[0]?.trim() || "Unknown";
         variantSize = parts[1]?.trim() || "Unknown";
         lastSubs = parts[0]?.trim() || "Unknown";
-      } else if (parts.length === 3){
+      } else if (parts.length === 3) {
         // console.log("parts == 3", d["Lineitem name"])
         name = d["Lineitem name"]
         subsType = parts[1]?.trim() || "Unknown";
@@ -45,7 +45,7 @@ export async function subscriptionSales(files) {
       //   debugger
       // }
 
-      if(subsType !== null && allSubsType.indexOf(subsType) < 0){
+      if (subsType !== null && allSubsType.indexOf(subsType) < 0) {
         allSubsType.push(subsType);
       }
 
@@ -71,32 +71,36 @@ export async function subscriptionSales(files) {
 
   // Detect inconsistencies and suspicious orders
   const analyzedOrders = [];
+  // Define priority order
+
   for (const [orderNumber, items] of Object.entries(groupedOrders)) {
     let hasPantySubscription = items.some((item) =>
-      item.name.toLowerCase().includes("quarterly")
+      item.name.toLowerCase().includes("custom sheer bra set subscription")
     );
     let hasSetSubscription = items.some((item) =>
-      item.name.toLowerCase().includes("subscription")
+      item.name.toLowerCase().includes("relief bra set subscription")
     );
     let othersSubs = items.some((item) =>
-      item.name.toLowerCase().includes("semi annual") || item.name.toLowerCase().includes("renew")
+      item.name.toLowerCase().includes("custom support bra set subscription")
     );
-    let hasFreeBraCode = items.some(
-      (item) => item.discountCode && item.discountCode.toLowerCase() === "freebra"
+    let hasFreeBraCode = items.some((item) =>
+      item.name.toLowerCase().includes("wireless bra set subscription")
     );
 
     const len = items.length;
 
     
-    
-    if( (hasSetSubscription || hasPantySubscription || othersSubs ) ){ // || hasFreeBraCode)){ && len < 2){
+
+
+    if ((othersSubs || hasPantySubscription || hasSetSubscription || hasFreeBraCode)) { // || hasFreeBraCode)){ && len < 2){
       // console.log("data before filtering Subscription", items)
       // if(hasSetSubscription){
       //   debugger
       // }
+      const newCheck = items.filter(d => d.name.includes("Subscription"))
 
-      for(const subItem of items){
-        const subsTypeOriginal = items[0].subsType
+      for (const subItem of items) {
+        const subsTypeOriginal = newCheck[0].subsType
         subItem.subsType = subsTypeOriginal
       }
 
@@ -112,9 +116,6 @@ export async function subscriptionSales(files) {
       });
     }
   }
-
-  // console.log("Analyzed Orders", analyzedOrders);
-  // console.log("Analyzed Orders", JSON.stringify(analyzedOrders));
   return analyzedOrders;
 }
 
@@ -135,7 +136,7 @@ export async function landingPages(files) {
   }
   // Group by date
   return allData
-  
+
 }
 
 export async function productSales(files) {
@@ -154,12 +155,12 @@ export async function productSales(files) {
         let parts = d["Lineitem name"].split(" - ");
         name = parts[0] || "Unknown";
         variant = parts[1]?.toLowerCase();
-        
-        if(d["Lineitem sku"][0] == "W"){
-          name = `Wireless ${parts[0] || "Unknown"}`   
+
+        if (d["Lineitem sku"][0] == "W") {
+          name = `Wireless ${parts[0] || "Unknown"}`
         }
       }
-      
+
 
       return {
         // Convert the passed-in 'date' to a Date object

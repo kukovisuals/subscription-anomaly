@@ -94,7 +94,7 @@ function CheaterSankeyChart({ data, width, height }) {
       .attr("y", d => (d.y1 + d.y0) / 2)
       .attr("dy", "0.35em")
       .attr("text-anchor", "end")
-      .attr("font-size", "14px")
+      .attr("font-size", "20px")
       .attr("fill", "#fff")
       .text(d => d.name);
   }, [data, width, height]);
