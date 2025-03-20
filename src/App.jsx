@@ -80,15 +80,15 @@ function App() {
       <h2>Suspicious Orders Flow</h2>
       <CheaterScatterPlot data={sankeyData} width={1500} height={700} />
       <h2>Relief Bra - Set Subscription</h2>
-      <CheaterSankeyDiagram data={sankeyDataRelief} width={1700} height={1000} isSet={"Relief Bra"} />
+      <CheaterSankeyDiagram data={sankeyDataRelief} width={2000} height={1000} isSet={"Relief Bra"} />
       <h2>Support Bra - Set Subscription</h2>
-      <CheaterSankeyDiagram data={sankeyDataSupport} width={1700} height={1000} isSet={"Support Bra"} />
+      <CheaterSankeyDiagram data={sankeyDataSupport} width={2000} height={1000} isSet={"Support Bra"} />
       <h2>Sheer Bra - Set Subscription</h2>
-      <CheaterSankeyDiagram data={sankeyDataSheer} width={1700} height={1000} isSet={"Sheer Bra"} />
+      <CheaterSankeyDiagram data={sankeyDataSheer} width={2000} height={1000} isSet={"Sheer Bra"} />
       <h2>Wireless Bra - Set Subscription</h2>
-      <CheaterSankeyDiagram data={sankeyDataWireless} width={1700} height={1000} isSet={"Wireless Bra"} />
+      <CheaterSankeyDiagram data={sankeyDataWireless} width={2000} height={1000} isSet={"Wireless Bra"} />
       <h2>All - Set Subscription</h2>
-      <CheaterSankeyDiagram data={sankeyData} width={1700} height={1000} isSet={""} />
+      <CheaterSankeyDiagram data={sankeyData} width={2000} height={1000} isSet={""} />
     </div>
   );
 }
