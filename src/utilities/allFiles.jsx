@@ -38,9 +38,11 @@ export const fileOrders = [
     // { file: "./data/orders_export_2025-03-14.csv", date: "2025-03-14" },
     // { file: "./data/orders_export_2025-03-15.csv", date: "2025-03-15" },
     // { file: "./data/orders_export_2025-03-16.csv", date: "2025-03-16" },
-    { file: "./data/orders_export_2025-03-17.csv", date: "2025-03-17" },
+    // { file: "./data/orders_export_2025-03-17.csv", date: "2025-03-17" },
     // { file: "./data/orders_export_2025-03-18.csv", date: "2025-03-18" },
     // { file: "./data/orders_export_2025-03-18-1.csv", dat÷e: "2025-03-18" },
+    // { file: "./data/orders_export_2025-03-19.csv", date: "2025-03-19" },
+    { file: "./data/orders_export_2025-03-20.csv", date: "2025-03-20" },
   ];
 
 
@@ -82,8 +84,9 @@ export const fileOrders = [
     // { file: "./data/orders_export_2025-03-14.csv", date: "2025-03-14" },
     // { file: "./data/orders_export_2025-03-15.csv", date: "2025-03-15" },
     // { file: "./data/orders_export_2025-03-16.csv", date: "2025-03-16" },
-    { file: "./data/orders_export_2025-03-17.csv", date: "2025-03-17" },
+    // { file: "./data/orders_export_2025-03-17.csv", date: "2025-03-17" },
     { file: "./data/orders_export_2025-03-18.csv", date: "2025-03-18" },
+    { file: "./data/orders_export_2025-03-19.csv", date: "2025-03-19" },
     
   ];
 
@@ -94,6 +97,7 @@ export const landingPageArrs = [
   // { file: "./data/Sessions by landing page - 2025-03-14 - 2025-03-14.csv", date: "2025-03-14" },
   // { file: "./data/Sessions by landing page - 2025-03-15 - 2025-03-15.csv", date: "2025-03-15" },
   // { file: "./data/Sessions by landing page - 2025-03-16 - 2025-03-16.csv", date: "2025-03-16" },
-  { file: "./data/Sessions by landing page - 2025-03-17 - 2025-03-17.csv", date: "2025-03-17" },
+  // { file: "./data/Sessions by landing page - 2025-03-17 - 2025-03-17.csv", date: "2025-03-17" },
   { file: "./data/Sessions by landing page - 2025-03-18 - 2025-03-18.csv", date: "2025-03-18" },
+  { file: "./data/Sessions by landing page - 2025-03-19 - 2025-03-19.csv", date: "2025-03-19" },
 ]

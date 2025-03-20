@@ -199,7 +199,11 @@ function StackedBars({data}) {
     // A color scale for the "layers" (i.e. each date)
     const color = d3.scaleOrdinal()
       .domain(dateKeys.map(String))
-      .range(["#7F8397", "#000000"]);
+      .range(["#A1A5A6", "#000000"]);
+
+    const colorB = d3.scaleOrdinal()
+      .domain(dateKeys.map(String))
+      .range(["#A1A5A6", "#0593A2"]);
 
     // G) Create an <svg> for this product
     const svg = container.append("svg")
@@ -224,7 +228,18 @@ function StackedBars({data}) {
       .enter()
       .append("g")
       .attr("class", "layer")
-      .attr("fill", (d, i) => color(String(dateKeys[i])));
+      .attr("fill", (d, i) => {
+         // The product name for this segment
+          console.log(productName)
+          // Check if the name matches one of your "special" names
+          if (productName === "Dreamscape Relief Bra" || productName === "Black Mesh Bralette" || productName === "Pearl Relief Bra" || productName === "Nude Relief Bra" || productName === "Nude Bralette" || productName === "Black Relief Bra"  || productName === "Black Bralette"){
+            return colorB(String(dateKeys[i]));
+          } else {
+            // Otherwise, use your original color scale
+            return color(String(dateKeys[i]));
+          }
+      }
+    );
 
     bar.selectAll("rect")
       .data(d => d)
@@ -342,7 +357,7 @@ function StackedBars({data}) {
 
   return (
     <div style={{ margin: "2rem" }}>
-      <h1>Products</h1>
+      <h1>Product Sale</h1>
       <div className="mainWrapper">
         <div className="container-filter">
           <p>Type of products</p>
