@@ -81,10 +81,10 @@ export async function subscriptionSales(files) {
       item.name.toLowerCase().includes("relief bra set subscription")
     );
     let othersSubs = items.some((item) =>
-      item.name.toLowerCase().includes("custom support bra set subscription")
+      item.name.toLowerCase().includes("custom support bra set subscription box")
     );
     let hasFreeBraCode = items.some((item) =>
-      item.name.toLowerCase().includes("wireless bra set subscription")
+      item.name.toLowerCase().includes("custom wireless bra set subscription")
     );
 
     const len = items.length;
@@ -173,6 +173,32 @@ export async function productSales(files) {
     // Flatten everything into one array
     allFileOrders.push(...data);
   }
+
+  return allFileOrders
+}
+
+
+
+export async function reviewsCleanup(files) {
+
+  let allFileOrders = [];
+
+  for (const { file } of files) {
+    const data = await d3.csv(file, d => {
+
+
+      return {
+        title: d["title"] || "",
+        body: d["body"] || "",
+        product: d["product"] || "",
+        sentiment_score: +d["sentiment_score"] || 0,
+      };
+    });
+    // Flatten everything into one array
+    allFileOrders.push(...data);
+  }
+
+  console.log("reviews", allFileOrders)
 
   return allFileOrders
 }

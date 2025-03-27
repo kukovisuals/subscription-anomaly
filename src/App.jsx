@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { fileOrders, onlyProducts, landingPageArrs } from './utilities/allFiles';
-import { productSales, subscriptionSales, landingPages } from './utilities/allDataObjects';
+import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps } from './utilities/allFiles';
+import { productSales, subscriptionSales, landingPages, reviewsCleanup } from './utilities/allDataObjects';
 
 import CheaterScatterPlot from './components/CheaterScatterPlot';
 import StackedBars from './components/StackProducts';
@@ -32,6 +32,8 @@ function App() {
         const suspiciousOrders = await subscriptionSales(fileOrders);
         const productOrders = await productSales(onlyProducts);
         const landingPagesCsv = await landingPages(landingPageArrs);
+        await reviewsCleanup(reviewsStamps)
+
 
         setSankeyData(suspiciousOrders);
         setProductData(productOrders);
