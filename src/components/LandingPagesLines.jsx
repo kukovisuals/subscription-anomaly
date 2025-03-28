@@ -169,7 +169,7 @@ groupedCVRData.forEach((values, name) => {
     const lastCVR = lastPoint.cvr;
     let lineColor;
 
-    if (lastCVR > 2) {
+    if (lastCVR > 3) {
         lineColor = "#012619";
     } else if (lastCVR < 2) {
         lineColor = "#8C0B0B";
@@ -204,7 +204,7 @@ groupedCVRData.forEach((values, name) => {
 
     // Only add label if it has data for the last date
     if (+lastPoint.year === +lastDate) {
-        if (lastCVR > 2 || lastCVR < 2) {
+        if (lastCVR > 3 || lastCVR < 2) {
         
             let labelY = yRight(lastPoint.cvr);
             

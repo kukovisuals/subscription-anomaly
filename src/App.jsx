@@ -118,7 +118,7 @@ function App() {
             <StackReviews data={reviewsData.filter(d => d.product.includes("subscription"))} width={700} height={600}/>
             <h2>Subscription Sentiment</h2>
             <TextChartReviews data={textReviewsData.filter(d => d.product.includes("subscription"))} width={700} height={600}/>
-            <h2>Relief Products</h2>
+            {/* <h2>Relief Products</h2>
             <StackReviews data={
               reviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("relief"))
             } width={700} height={500}/>
@@ -160,7 +160,7 @@ function App() {
             <h2>Support and wireless Bra Sentiment</h2>
             <TextChartReviews data={
               textReviewsData.filter(d => !d.product.includes("subscription") && !d.product.includes("balconette") && !d.product.includes("3d") && !d.product.includes("mesh") && !d.product.includes("relief") && d.product.includes("bra"))
-            } width={700} height={600}/>
+            } width={700} height={600}/> */}
           </div>
         )}
       </div>

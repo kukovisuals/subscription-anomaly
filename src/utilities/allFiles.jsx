@@ -48,7 +48,8 @@ export const fileOrders = [
     // { file: "./data/orders_export_2025-03-23.csv", date: "2025-03-23" },
     // { file: "./data/orders_export_2025-03-24.csv", date: "2025-03-24" },
     // { file: "./data/orders_export_2025-03-25.csv", date: "2025-03-25" },
-    { file: "./data/orders_export_2025-03-26.csv", date: "2025-03-26" },
+    // { file: "./data/orders_export_2025-03-26.csv", date: "2025-03-26" },
+    { file: "./data/orders_export_2025-03-27.csv", date: "2025-03-27" },
   ];
 
 
@@ -98,8 +99,9 @@ export const fileOrders = [
     // { file: "./data/orders_export_2025-03-22.csv", date: "2025-03-22" },
     // { file: "./data/orders_export_2025-03-23.csv", date: "2025-03-23" },
     // { file: "./data/orders_export_2025-03-24.csv", date: "2025-03-24" },
-    { file: "./data/orders_export_2025-03-25.csv", date: "2025-03-25" },
+    // { file: "./data/orders_export_2025-03-25.csv", date: "2025-03-25" },
     { file: "./data/orders_export_2025-03-26.csv", date: "2025-03-26" },
+    { file: "./data/orders_export_2025-03-27.csv", date: "2025-03-27" },
   ];
 
 export const landingPageArrs = [
@@ -115,8 +117,9 @@ export const landingPageArrs = [
   // { file: "./data/Sessions by landing page - 2025-03-22 - 2025-03-22.csv", date: "2025-03-22" },
   // { file: "./data/Sessions by landing page - 2025-03-23 - 2025-03-23.csv", date: "2025-03-23" },
   // { file: "./data/Sessions by landing page - 2025-03-24 - 2025-03-24.csv", date: "2025-03-24" },
-  { file: "./data/Sessions by landing page - 2025-03-25 - 2025-03-25.csv", date: "2025-03-25" },
+  // { file: "./data/Sessions by landing page - 2025-03-25 - 2025-03-25.csv", date: "2025-03-25" },
   { file: "./data/Sessions by landing page - 2025-03-26 - 2025-03-26.csv", date: "2025-03-26" },
+  { file: "./data/Sessions by landing page - 2025-03-27 - 2025-03-27.csv", date: "2025-03-27" },
 ]
 
 export const reviewsStamps = [

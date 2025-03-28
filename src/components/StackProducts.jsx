@@ -231,8 +231,8 @@ function StackedBars({data}) {
       .attr("fill", (d, i) => {
          // The product name for this segment
           // console.log(productName)
-          // Check if the name matches one of your "special" names
-          if (productName === "Dreamscape Relief Bra" || productName === "Black Mesh Bralette" || productName === "Pearl Relief Bra" || productName === "Nude Relief Bra" || productName === "Nude Bralette" || productName === "Black Relief Bra"  || productName === "Black Bralette"){
+          // Check if the name matches one
+          if (productName === "Wireless Granada Sky Bralette" || productName === "Tuscan Bralette" || productName === "Dreamscape Relief Bra" || productName === "Black Mesh Bralette" || productName === "Pearl Relief Bra" || productName === "Nude Relief Bra" || productName === "Nude Bralette" || productName === "Black Relief Bra"  || productName === "Black Bralette"){
             return colorB(String(dateKeys[i]));
           } else {
             // Otherwise, use your original color scale

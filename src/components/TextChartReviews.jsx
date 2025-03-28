@@ -34,6 +34,7 @@ function IssueBarChart({ data, width, height }) {
   useEffect(() => {
     if (!Array.isArray(data) || data.length === 0) return;
 
+    data.map( d => console.log(d.body))
     const svg = d3.select(svgRef.current);
     const margin = { top: 60, right: 40, bottom: 60, left: 160 };
     const innerWidth = width - margin.left - margin.right;
