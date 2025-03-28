@@ -120,6 +120,7 @@ export const landingPageArrs = [
 ]
 
 export const reviewsStamps = [
-  { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_14H54M.csv" },
+  // { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_14H54M.csv" },
+  { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_19H4M.csv" },
 ];
 

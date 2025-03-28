@@ -230,7 +230,7 @@ function StackedBars({data}) {
       .attr("class", "layer")
       .attr("fill", (d, i) => {
          // The product name for this segment
-          console.log(productName)
+          // console.log(productName)
           // Check if the name matches one of your "special" names
           if (productName === "Dreamscape Relief Bra" || productName === "Black Mesh Bralette" || productName === "Pearl Relief Bra" || productName === "Nude Relief Bra" || productName === "Nude Bralette" || productName === "Black Relief Bra"  || productName === "Black Bralette"){
             return colorB(String(dateKeys[i]));

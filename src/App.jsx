@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps } from './utilities/allFiles';
-import { productSales, subscriptionSales, landingPages, reviewsCleanup } from './utilities/allDataObjects';
+import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens } from './utilities/allDataObjects';
 
 import CheaterScatterPlot from './components/CheaterScatterPlot';
 import StackedBars from './components/StackProducts';
 import LandingPagesLine from './components/LandingPagesLines';
 import CheaterSankeyDiagram from './components/CheaterSankeyDiagram';
+import StackReviews from "./components/StackReviews";
+import TextChartReviews from "./components/TextChartReviews";
 
 function App() {
   const [view, setView] = useState("products"); // "products", "landingPages", "subscriptions"
@@ -18,6 +20,9 @@ function App() {
   const [sankeyDataSupport, setSankeyDataSupport] = useState([]);
   const [sankeyDataSheer, setSankeyDataSheer] = useState([]);
   const [sankeyDataWireless, setSankeyDataWireless] = useState([]);
+
+  const [reviewsData, setReviewsData] = useState([]);
+  const [textReviewsData, setTextReviewsData] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const isFirstRender = useRef(true);
@@ -32,12 +37,15 @@ function App() {
         const suspiciousOrders = await subscriptionSales(fileOrders);
         const productOrders = await productSales(onlyProducts);
         const landingPagesCsv = await landingPages(landingPageArrs);
-        await reviewsCleanup(reviewsStamps)
+        const reviewsCsv = await reviewsCleanup(reviewsStamps);
+        const reviewsTextCsv = await reviewsTokens(reviewsStamps);
 
 
         setSankeyData(suspiciousOrders);
         setProductData(productOrders);
         setLandingPagesCn(landingPagesCsv);
+        setReviewsData(reviewsCsv);
+        setTextReviewsData(reviewsTextCsv);
 
         setSankeyDataRelief(suspiciousOrders.filter(order => order.items[0]?.subsType === "Custom Relief Bra Set Subscription Box"));
         setSankeyDataSupport(suspiciousOrders.filter(order => order.items[0]?.subsType === "Custom Support Bra Set Subscription Box"));
@@ -64,6 +72,7 @@ function App() {
           <button className="menu-first-child" onClick={() => setView("products")}>Products</button>
           <button onClick={() => setView("landingPages")}>Landing Pages</button>
           <button onClick={() => setView("subscriptions")}>Subscriptions</button>
+          <button onClick={() => setView("reviews")}>Reviews</button>
         </div>
       </div>
       <div className="dashboard-container">
@@ -100,6 +109,58 @@ function App() {
             <CheaterSankeyDiagram data={sankeyData} width={2000} height={1000} isSet={""} />
             <h2>Suspicious Orders Flow</h2>
             <CheaterScatterPlot data={sankeyData} width={1500} height={700} />
+          </div>
+        )}
+
+        {view === "reviews" && (
+          <div>
+            <h2>Subscription data</h2>
+            <StackReviews data={reviewsData.filter(d => d.product.includes("subscription"))} width={700} height={600}/>
+            <h2>Subscription Sentiment</h2>
+            <TextChartReviews data={textReviewsData.filter(d => d.product.includes("subscription"))} width={700} height={600}/>
+            <h2>Relief Products</h2>
+            <StackReviews data={
+              reviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("relief"))
+            } width={700} height={500}/>
+            <h2>Relief Bra Sentiment</h2>
+            <TextChartReviews data={
+              textReviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("relief"))
+            } width={700} height={600}/>
+            <h2>Sheer Sentiment</h2>
+            <StackReviews data={
+              reviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("mesh"))
+            } width={700} height={800}/>
+            <h2>Sheer Sentiment</h2>
+            <TextChartReviews data={
+              textReviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("mesh"))
+            } width={700} height={600}/>
+
+            <h2>3D Bra Sentiment</h2>
+            <StackReviews data={
+              reviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("3d"))
+            } width={700} height={500}/>
+            <h2>3D Bra Sentiment</h2>
+            <TextChartReviews data={
+              textReviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("3d"))
+            } width={700} height={600}/>
+
+            <h2>Balconette Bra Sentiment</h2>
+            <StackReviews data={
+              reviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("balconette"))
+            } width={700} height={500}/>
+            <h2>Balconette Bra Sentiment</h2>
+            <TextChartReviews data={
+              textReviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("balconette"))
+            } width={700} height={600}/>
+
+            <h2>Support and wireless Bra Sentiment</h2>
+            <StackReviews data={
+              reviewsData.filter(d => !d.product.includes("subscription") && !d.product.includes("balconette") && !d.product.includes("3d") && !d.product.includes("mesh") && !d.product.includes("relief") && d.product.includes("bra"))
+            } width={700} height={500}/>
+            <h2>Support and wireless Bra Sentiment</h2>
+            <TextChartReviews data={
+              textReviewsData.filter(d => !d.product.includes("subscription") && !d.product.includes("balconette") && !d.product.includes("3d") && !d.product.includes("mesh") && !d.product.includes("relief") && d.product.includes("bra"))
+            } width={700} height={600}/>
           </div>
         )}
       </div>

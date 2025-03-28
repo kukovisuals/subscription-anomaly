@@ -89,10 +89,10 @@ export async function subscriptionSales(files) {
 
     const len = items.length;
 
-    
 
 
-    if ((othersSubs || hasPantySubscription || hasSetSubscription || hasFreeBraCode) ) { // || hasFreeBraCode)){ && len < 2){
+
+    if ((othersSubs || hasPantySubscription || hasSetSubscription || hasFreeBraCode)) { // || hasFreeBraCode)){ && len < 2){
       // console.log("data before filtering Subscription", items)
       // if(hasSetSubscription){
       //   debugger
@@ -177,20 +177,25 @@ export async function productSales(files) {
   return allFileOrders
 }
 
+import nlp from 'compromise';
 
 
 export async function reviewsCleanup(files) {
 
   let allFileOrders = [];
 
+
   for (const { file } of files) {
     const data = await d3.csv(file, d => {
 
+      if (d["body"].length < 1) return null
+
+      const newBody = cleanTokens(d["body"].toLocaleLowerCase())
 
       return {
-        title: d["title"] || "",
-        body: d["body"] || "",
-        product: d["product"] || "",
+        title: d["title"].toLocaleLowerCase() || "",
+        body: newBody || "",
+        product: d["product"].toLocaleLowerCase() || "",
         sentiment_score: +d["sentiment_score"] || 0,
       };
     });
@@ -198,7 +203,76 @@ export async function reviewsCleanup(files) {
     allFileOrders.push(...data);
   }
 
-  console.log("reviews", allFileOrders)
+  const onlySubs = allFileOrders
+    // .filter(d => d.product.includes("subscription"))
+    .sort((a, b) => a.product.localeCompare(b.product));
 
-  return allFileOrders
+  const grouped = d3.groups(onlySubs, d => d.product);
+
+  // Convert grouped data into one object per product with average sentiment
+  const averaged = grouped.map(([product, reviews]) => {
+    const avgScore = d3.mean(reviews, r => r.sentiment_score);
+    return {
+      product,
+      sentiment_score: avgScore,
+      count: reviews.length
+    };
+  });
+
+  // Sort by product name or sentiment
+  averaged.sort((a, b) => a.product.localeCompare(b.product));
+  averaged.sort((a, b) => b.sentiment_score - a.sentiment_score);
+
+
+  return averaged
+}
+
+export async function reviewsTokens(files) {
+
+  let allFileOrders = [];
+
+
+  for (const { file } of files) {
+    const data = await d3.csv(file, d => {
+
+      if (d["body"].length < 1) return null
+
+      const newBody = cleanTokens(d["body"].toLocaleLowerCase())
+
+      return {
+        title: d["title"].toLocaleLowerCase() || "",
+        body: newBody || "",
+        product: d["product"].toLocaleLowerCase() || "",
+        sentiment_score: +d["sentiment_score"] || 0,
+        created_at: d["created_at"] || ""
+      };
+    });
+    // Flatten everything into one array
+    allFileOrders.push(...data);
+  }
+
+  const onlySubs = allFileOrders
+    // .filter(d => !d.product.includes("subscription"))
+    .sort((a, b) => a.product.localeCompare(b.product));
+
+  // onlySubs.map( d => console.log(d.body))
+  console.log(onlySubs)
+  return onlySubs
+}
+
+function cleanTokens(text) {
+  const stopwords = [
+    "i", "my", "it", "if", "a", "me", "have", "was", "me", "what", "so", "the", "and", "is", "with", "for", "to", "me", "as", "of", "are", "on", "that", "am", "just", "can't",
+    "they", "this", "these", "wait", "box", "subscription", "first", "next" // <- optional custom removals
+  ];
+
+  const doc = nlp(text).normalize({ punctuation: true, lowercase: true });
+  const words = doc.terms().out('array');
+
+  // Then apply your stopwords filtering
+  const cleanTokens = words
+    .map(w => w.replace(/[^\w\s]/g, ''))        // Remove punctuation from each word
+    .filter(w => w.length > 1 && !stopwords.includes(w));
+
+  return cleanTokens
 }
