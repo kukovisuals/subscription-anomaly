@@ -203,7 +203,8 @@ function StackedBars({data}) {
 
     const colorB = d3.scaleOrdinal()
       .domain(dateKeys.map(String))
-      .range(["#A1A5A6", "#0593A2"]);
+      // .range(["#A1A5A6", "#0593A2"]);
+      .range(["#A1A5A6", "#6e1f37"]);
 
     // G) Create an <svg> for this product
     const svg = container.append("svg")
@@ -232,8 +233,9 @@ function StackedBars({data}) {
          // The product name for this segment
           // console.log(productName)
           // Check if the name matches one
-          if (productName === "Wireless Granada Sky Bralette" || productName === "Tuscan Bralette" || productName === "Dreamscape Relief Bra" || productName === "Black Mesh Bralette" || productName === "Pearl Relief Bra" || productName === "Nude Relief Bra" || productName === "Nude Bralette" || productName === "Black Relief Bra"  || productName === "Black Bralette"){
-            return colorB(String(dateKeys[i]));
+          // if (productName === "Wireless Granada Sky Bralette" || productName === "Tuscan Bralette" || productName === "Dreamscape Relief Bra" || productName === "Black Mesh Bralette" || productName === "Pearl Relief Bra" || productName === "Nude Relief Bra" || productName === "Nude Bralette" || productName === "Black Relief Bra"  || productName === "Black Bralette"){
+          if (productName.includes("Balconette") ){
+              return colorB(String(dateKeys[i]));
           } else {
             // Otherwise, use your original color scale
             return color(String(dateKeys[i]));

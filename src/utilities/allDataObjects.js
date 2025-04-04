@@ -92,7 +92,7 @@ export async function subscriptionSales(files) {
 
 
 
-    if ((othersSubs || hasPantySubscription || hasSetSubscription || hasFreeBraCode)) { // || hasFreeBraCode)){ && len < 2){
+    if ((othersSubs || hasPantySubscription || hasSetSubscription || hasFreeBraCode) ) { // || hasFreeBraCode)){ && len < 2){
       // console.log("data before filtering Subscription", items)
       // if(hasSetSubscription){
       //   debugger
