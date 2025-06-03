@@ -2,14 +2,15 @@ import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
 /**
- * Best Sellers CVR Analysis Scatter Plot
- * Shows campaigns that are lowering CVR for best-sellers collection
+ * CVR Analysis Scatter Plot with Landing Page Filtering
+ * Shows campaigns that are lowering CVR for specific collection/page types
  * 
  * @param {Object} data - Marketing data from marketingResources function
+ * @param {string} filterByLandingPageType - Landing page type to filter by (e.g., 'best-sellers', 'homepage', 'product-page')
  * @param {number} width - SVG width
  * @param {number} height - SVG height
  */
-function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
+function MarketingScatter({ data, filterByLandingPageType = 'best-sellers', width = 1200, height = 600 }) {
     const svgRef = useRef(null);
 
     useEffect(() => {
@@ -18,15 +19,21 @@ function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
             return;
         }
 
-        // Filter for best-sellers campaigns only
-        const bestSellersData = data.campaigns.filter(campaign => {
-            return campaign.totalSessions >= 5; // Minimum sessions for meaningful analysis
+        // Filter campaigns by the specified landing page type
+        const filteredData = data.campaigns.filter(campaign => {
+            return campaign.landingPageType === filterByLandingPageType && campaign.totalSessions >= 5;
         });
 
-        if (bestSellersData.length === 0) {
-            console.warn("No best-sellers campaign data found.");
+        if (filteredData.length === 0) {
+            console.warn(`No campaign data found for landing page type: ${filterByLandingPageType}`);
             return;
         }
+
+        // Calculate filtered metrics
+        const filteredSessions = filteredData.reduce((sum, c) => sum + c.totalSessions, 0);
+        const filteredConversions = filteredData.reduce((sum, c) => sum + c.totalConversions, 0);
+        const filteredCVR = filteredSessions > 0 ? (filteredConversions / filteredSessions) * 100 : 0;
+        const filteredLowPerforming = filteredData.filter(c => c.isLowPerforming).length;
 
         // Setup dimensions
         const margin = { top: 60, right: 200, bottom: 80, left: 100 };
@@ -44,18 +51,18 @@ function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
         // Define scales
         const xScale = d3
             .scaleLinear()
-            .domain([0, d3.max(bestSellersData, d => d.totalSessions) * 1.1])
+            .domain([0, d3.max(filteredData, d => d.totalSessions) * 1.1])
             .range([0, innerWidth])
             .nice();
 
         const yScale = d3
             .scaleLinear()
-            .domain([0, Math.max(d3.max(bestSellersData, d => d.conversionRate), 5)])
+            .domain([0, Math.max(d3.max(filteredData, d => d.conversionRate), 5)])
             .range([innerHeight, 0])
             .nice();
 
         // Color scale by platform
-        const platforms = [...new Set(bestSellersData.map(d => d.platform))];
+        const platforms = [...new Set(filteredData.map(d => d.platform))];
         const colorScale = d3
             .scaleOrdinal()
             .domain(platforms)
@@ -67,7 +74,7 @@ function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
         // Size scale based on total visitors
         const sizeScale = d3
             .scaleSqrt()
-            .domain([0, d3.max(bestSellersData, d => d.totalVisitors)])
+            .domain([0, d3.max(filteredData, d => d.totalVisitors)])
             .range([6, 20]);
 
         // Create axes
@@ -175,7 +182,7 @@ function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
         // Add circles for each campaign
         const circles = container
             .selectAll("circle")
-            .data(bestSellersData)
+            .data(filteredData)
             .enter()
             .append("circle")
             .attr("cx", d => xScale(d.totalSessions))
@@ -206,7 +213,8 @@ function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
                             </div>
                             <div><strong>Campaign:</strong> ${d.campaign}</div>
                             ${d.influencer ? `<div><strong>Influencer:</strong> ${d.influencer}</div>` : ''}
-                            <div><strong>CVR:</strong> ${d.conversionRate.toFixed(2)}%</div>
+                            <div><strong>Landing Page:</strong> ${d.landingPageType}</div>
+                            <div><strong>CVR:</strong> ${d.conversionRate.toFixed(2)}%</div>.toFixed(2)}%</div>
                             <div><strong>Sessions:</strong> ${d.totalSessions.toLocaleString()}</div>
                             <div><strong>Visitors:</strong> ${d.totalVisitors.toLocaleString()}</div>
                             <div><strong>Conversions:</strong> ${d.totalConversions}</div>
@@ -325,7 +333,7 @@ function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
             .style("font-size", "18px")
             .style("font-weight", "bold")
             .attr("fill", "black")
-            .text("Best-Sellers Collection: Campaign CVR Analysis");
+            .text("Marketing Campaign CVR Analysis");
 
         svg
             .append("text")
@@ -370,13 +378,13 @@ function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="text-blue-800 text-sm font-medium">Total Sessions</div>
                     <div className="text-blue-900 text-2xl font-bold">{data.summary.totalSessions.toLocaleString()}</div>
-                    <div className="text-blue-600 text-xs">best-sellers traffic</div>
+                    <div className="text-blue-600 text-xs">total traffic</div>
                 </div>
                 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="text-green-800 text-sm font-medium">Overall CVR</div>
                     <div className="text-green-900 text-2xl font-bold">{data.summary.overallCVR}%</div>
-                    <div className="text-green-600 text-xs">best-sellers average</div>
+                    <div className="text-green-600 text-xs">average CVR</div>
                 </div>
                 
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
@@ -389,4 +397,4 @@ function BestSellersCVRScatter({ data, width = 1200, height = 600 }) {
     );
 }
 
-export default BestSellersCVRScatter;
+export default MarketingScatter;

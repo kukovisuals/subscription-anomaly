@@ -282,7 +282,6 @@ function cleanTokens(text) {
 /*
   * Marketing data
 */
-
 export async function marketingResources(files) {
   let allData = [];
 
@@ -461,13 +460,10 @@ function classifyLandingPage(url) {
 
 // Helper function to generate CVR analysis data
 function generateCVRAnalysis(allData) {
-  // Filter for best-sellers data
-  const bestSellersData = allData.filter(row => row.landingPageType === 'best-sellers');
+  // Group ALL data by platform, campaign, and landing page type (not just best-sellers)
+  const campaignGroups = groupByCampaign(allData);
   
-  // Group by platform and campaign
-  const campaignGroups = groupByCampaign(bestSellersData);
-  
-  // Calculate CVR metrics for each campaign
+  // Calculate CVR metrics for each campaign-landing page combination
   const cvrAnalysis = campaignGroups.map(group => {
     const weightedCVR = group.totalSessions > 0 ? 
       (group.totalConversions / group.totalSessions) * 100 : 0;
@@ -477,6 +473,7 @@ function generateCVRAnalysis(allData) {
       campaign: group.campaign,
       channel: group.channel,
       influencer: group.influencer,
+      landingPageType: group.landingPageType,
       totalSessions: group.totalSessions,
       totalConversions: group.totalConversions,
       totalVisitors: group.totalVisitors,
@@ -485,16 +482,27 @@ function generateCVRAnalysis(allData) {
       isLowPerforming: weightedCVR < 2.0, // Below 2% CVR
       performanceLevel: getPerformanceLevel(weightedCVR),
       dataPoints: group.dataPoints,
-      regions: group.regions
+      regions: group.regions,
+      landingPages: group.landingPages,
+      uniqueLandingPages: group.uniqueLandingPages
     };
   })
   .filter(item => item.totalSessions >= 5) // Filter for meaningful traffic
   .sort((a, b) => a.conversionRate - b.conversionRate); // Sort by CVR ascending
 
-  // Calculate overall metrics
-  const totalSessions = bestSellersData.reduce((sum, row) => sum + row.sessions, 0);
-  const totalConversions = bestSellersData.reduce((sum, row) => sum + row.conversions, 0);
+  // Calculate overall metrics for ALL data
+  const totalSessions = allData.reduce((sum, row) => sum + row.sessions, 0);
+  const totalConversions = allData.reduce((sum, row) => sum + row.conversions, 0);
   const overallCVR = totalSessions > 0 ? (totalConversions / totalSessions) * 100 : 0;
+
+  // Calculate best-sellers specific metrics for backward compatibility
+  const bestSellersData = allData.filter(row => row.landingPageType === 'best-sellers');
+  const bestSellersSessions = bestSellersData.reduce((sum, row) => sum + row.sessions, 0);
+  const bestSellersConversions = bestSellersData.reduce((sum, row) => sum + row.conversions, 0);
+  const bestSellersCVR = bestSellersSessions > 0 ? (bestSellersConversions / bestSellersSessions) * 100 : 0;
+
+  // Get unique landing page types for filtering options
+  const landingPageTypes = [...new Set(allData.map(row => row.landingPageType))];
 
   return {
     summary: {
@@ -503,22 +511,40 @@ function generateCVRAnalysis(allData) {
       totalSessions,
       totalConversions,
       overallCVR: Math.round(overallCVR * 100) / 100,
-      benchmarkCVR: 2.0
+      benchmarkCVR: 2.0,
+      // Best-sellers specific metrics
+      bestSellersSessions,
+      bestSellersConversions,
+      bestSellersCVR: Math.round(bestSellersCVR * 100) / 100,
+      // Available landing page types for filtering
+      availableLandingPageTypes: landingPageTypes
     },
     campaigns: cvrAnalysis,
     lowPerformers: cvrAnalysis.filter(c => c.isLowPerforming),
     topPerformers: cvrAnalysis.filter(c => !c.isLowPerforming).slice(-5).reverse(),
     allData: allData, // Include full dataset for additional analysis
-    bestSellersData: bestSellersData // Include filtered best-sellers data
+    bestSellersData: bestSellersData, // Include filtered best-sellers data
+    // Helper function to filter by landing page type
+    filterByLandingPageType: function(landingPageType) {
+      return {
+        campaigns: this.campaigns.filter(c => c.landingPageType === landingPageType),
+        summary: {
+          ...this.summary,
+          filteredType: landingPageType,
+          filteredCampaigns: this.campaigns.filter(c => c.landingPageType === landingPageType).length,
+          filteredLowPerforming: this.campaigns.filter(c => c.landingPageType === landingPageType && c.isLowPerforming).length
+        }
+      };
+    }
   };
 }
 
-// Helper function to group data by campaign
+// Helper function to group data by campaign and landing page type
 function groupByCampaign(data) {
   const groups = {};
   
   data.forEach(row => {
-    const key = `${row.platform}|${row.campaign}`;
+    const key = `${row.platform}|${row.campaign}|${row.landingPageType}`;
     
     if (!groups[key]) {
       groups[key] = {
@@ -526,12 +552,14 @@ function groupByCampaign(data) {
         campaign: row.campaign,
         channel: row.channel,
         influencer: row.influencer,
+        landingPageType: row.landingPageType,
         totalSessions: 0,
         totalConversions: 0,
         totalVisitors: 0,
         totalCartAdditions: 0,
         dataPoints: 0,
-        regions: new Set()
+        regions: new Set(),
+        landingPages: new Set()
       };
     }
     
@@ -541,12 +569,15 @@ function groupByCampaign(data) {
     groups[key].totalCartAdditions += row.cartAdditions;
     groups[key].dataPoints += 1;
     groups[key].regions.add(row.sessionRegion);
+    groups[key].landingPages.add(row.landingPageUrl);
   });
   
-  // Convert regions set to array and return values
+  // Convert sets to arrays and return values
   return Object.values(groups).map(group => ({
     ...group,
-    regions: Array.from(group.regions)
+    regions: Array.from(group.regions),
+    landingPages: Array.from(group.landingPages),
+    uniqueLandingPages: group.landingPages.size
   }));
 }
 
@@ -559,7 +590,6 @@ function getPerformanceLevel(cvr) {
   if (cvr < 5) return 'Good';
   return 'Excellent';
 }
-
 /*
   * Bundle data
 */
