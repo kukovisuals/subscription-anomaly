@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps } from './utilities/allFiles';
-import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens } from './utilities/allDataObjects';
+import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps, inventoryFiles, setsBundles, customBundler } from './utilities/allFiles';
+import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens, inventoryData, marketingResources, allOrdersWithBundleInfo } from './utilities/allDataObjects';
 
 import CheaterScatterPlot from './components/CheaterScatterPlot';
 import StackedBars from './components/StackProducts';
@@ -8,6 +8,9 @@ import LandingPagesLine from './components/LandingPagesLines';
 import CheaterSankeyDiagram from './components/CheaterSankeyDiagram';
 import StackReviews from "./components/StackReviews";
 import TextChartReviews from "./components/TextChartReviews";
+import LandingsBars from "./components/LandingsBars";
+import CustomBuilder from "./components/CustomBuilder";
+import MarketingScatter from "./components/MarketingScatter";
 
 function App() {
   const [view, setView] = useState("products"); // "products", "landingPages", "subscriptions"
@@ -24,6 +27,9 @@ function App() {
   const [reviewsData, setReviewsData] = useState([]);
   const [textReviewsData, setTextReviewsData] = useState([]);
 
+  const [marketingData, setMarketingData] = useState([]);
+  const [customBuildSet, setCustomBuildSet] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const isFirstRender = useRef(true);
 
@@ -39,13 +45,19 @@ function App() {
         const landingPagesCsv = await landingPages(landingPageArrs);
         const reviewsCsv = await reviewsCleanup(reviewsStamps);
         const reviewsTextCsv = await reviewsTokens(reviewsStamps);
-
+        // const inventoryDataCsv = await inventoryData(inventoryFiles);
+        const marketingDataCsv = await marketingResources(setsBundles);
+        const customBuildCsv = await allOrdersWithBundleInfo(customBundler);
+        
+        // const typesSetBuilder = customBuildCsv(customBuildCsv);
 
         setSankeyData(suspiciousOrders);
         setProductData(productOrders);
         setLandingPagesCn(landingPagesCsv);
         setReviewsData(reviewsCsv);
         setTextReviewsData(reviewsTextCsv);
+        setMarketingData(marketingDataCsv);
+        setCustomBuildSet(customBuildCsv);
 
         setSankeyDataRelief(suspiciousOrders.filter(order => order.items[0]?.subsType === "Custom Relief Bra Set Subscription Box"));
         setSankeyDataSupport(suspiciousOrders.filter(order => order.items[0]?.subsType === "Custom Support Bra Set Subscription Box"));
@@ -62,6 +74,8 @@ function App() {
   }, []);
 
   if (loading) return <div>Loading data...</div>;
+  // console.log(customBuildSet);
+  console.log(marketingData);
 
   return (
     <div className="app-container">
@@ -72,6 +86,8 @@ function App() {
           <button className="menu-first-child" onClick={() => setView("products")}>Products</button>
           <button onClick={() => setView("landingPages")}>Landing Pages</button>
           <button onClick={() => setView("subscriptions")}>Subscriptions</button>
+          <button onClick={() => setView("bundler")}>bundler</button>
+          <button onClick={() => setView("marketing")}>marketing</button>
           <button onClick={() => setView("reviews")}>Reviews</button>
         </div>
       </div>
@@ -88,10 +104,22 @@ function App() {
           <div>
             <h2>Landing Pages - Cart sessions over 100/day</h2>
             <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions > 100 && d.name !== "/")} containerId="chart-high" />
-            <h2>Landing Pages - Cart sessions 50-100/day</h2>
-            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 100 && d.cartAdditions > 50)} containerId="chart-mid" />
-            <h2>Landing Pages - Cart sessions 10-50/day</h2>
-            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 50 && d.cartAdditions > 10)} containerId="chart-low" />
+            <h3>Sessions</h3>
+            <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions > 100 && d.name !== "/")} containerId="bar-chart-high" />
+            <h2>Landing Pages - Cart sessions 30-100/day</h2>
+            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 100 && d.cartAdditions > 30)} containerId="chart-mid" />
+            <h3>Sessions</h3>
+            <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions < 100 && d.cartAdditions > 30)} containerId="bar-chart-mid" />
+            <h2>Landing Pages - Cart sessions 10-30/day</h2>
+            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 30 && d.cartAdditions > 10)} containerId="chart-low" />
+            <h3>Sessions</h3>
+            <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions < 30 && d.cartAdditions > 10)} containerId="bar-chart-low" />
+            <h2>Landing Pages - Cart sessions 10-30/day</h2>
+            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 30 && d.cartAdditions > 10)} containerId="chart-low-low" />
+            <h3>Sessions</h3>
+            <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions < 30 && d.cartAdditions > 10)} containerId="bar-chart-low-low" />
+            {/* <h2>Landing Pages - Cart sessions 10-50/day</h2>
+            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 20 && d.cartAdditions > 10)} containerId="chart-low-low" /> */}
           </div>
         )}
 
@@ -112,12 +140,42 @@ function App() {
           </div>
         )}
 
+        {view === "bundler" && (
+          <div>
+            <CustomBuilder data={customBuildSet} containerId="d-custom-builder"/>
+          </div>
+        )}
+
+        {
+          view == "marketing" && (
+            <div className="p-6 bg-gray-50 min-h-screen">
+                <div className="max-w-6xl mx-auto">
+                    <h1 className="text-3xl font-bold text-gray-800 mb-6">Marketing Campaign Analysis</h1>
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <MarketingScatter data={marketingData} width={900} height={600} />
+                    </div>
+                    <div className="mt-6 bg-white p-4 rounded-lg shadow">
+                        <h2 className="text-lg font-semibold mb-2">How to Read This Chart:</h2>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                            <li>• <strong>X-axis:</strong> Number of sessions for each campaign</li>
+                            <li>• <strong>Y-axis:</strong> Conversion rate (CVR) as a percentage</li>
+                            <li>• <strong>Circle size:</strong> Proportional to number of sessions</li>
+                            <li>• <strong>Colors:</strong> Different marketing channels</li>
+                            <li>• <strong>Best performers:</strong> High CVR campaigns (top of chart)</li>
+                            <li>• <strong>High volume:</strong> Campaigns with many sessions (right side)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+          )
+        }
+
         {view === "reviews" && (
           <div>
             <h2>Subscription data</h2>
-            <StackReviews data={reviewsData.filter(d => d.product.includes("subscription"))} width={700} height={600}/>
+            <StackReviews data={reviewsData.filter(d => d.product.includes("subscription"))} width={700} height={600} />
             <h2>Subscription Sentiment</h2>
-            <TextChartReviews data={textReviewsData.filter(d => d.product.includes("subscription"))} width={700} height={600}/>
+            <TextChartReviews data={textReviewsData.filter(d => d.product.includes("subscription"))} width={700} height={600} />
             {/* <h2>Relief Products</h2>
             <StackReviews data={
               reviewsData.filter(d => !d.product.includes("subscription") && d.product.includes("relief"))
@@ -169,3 +227,5 @@ function App() {
 }
 
 export default App;
+
+

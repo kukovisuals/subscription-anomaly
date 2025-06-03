@@ -138,8 +138,8 @@ function StackedBars({data}) {
   const productsMap = d3.group(newData, d => d.name);
 
   // 2) Set up chart dimensions and container
-  const width = 300;
-  const height = 400;
+  const width = 400;
+  const height = 500;
   const margin = { top: 30, right: 20, bottom: 50, left: 40 };
 
   const container = d3.select("#products_two").html(""); // clear or use .select() as needed
@@ -296,6 +296,9 @@ function StackedBars({data}) {
             const labelWidth = 50;
             const labelHeight = 20;
 
+            // console.log("variants ---")
+            // console.log(dRect.data.variant)
+
             // Draw a red rectangle as the background
             d3.select(this.parentNode)
               .append("rect")
@@ -320,7 +323,7 @@ function StackedBars({data}) {
               .text("No Sale");
           }
 
-          if (quantity > 3) {
+          if (quantity > 2 && (dRect.data.variant == "sm" || dRect.data.variant == "md" || dRect.data.variant == "lg")) {
             // Coordinates for our label
             const labelX = x(dRect[0]) + (x(dRect[1]) - x(dRect[0])) / 2;
             const labelY = y(dRect.data.variant) + y.bandwidth() / 2;

@@ -13,8 +13,10 @@ function LandingPagesLine({ data, containerId }) {
     function drawChart(data) {
         d3.select(`#${containerId}`).selectAll("*").remove();
 
+        console.log(data);
+
         const margin = { top: 10, right: 300, bottom: 30, left: 60 },
-            width = 900 - margin.left - margin.right,
+            width = 1000 - margin.left - margin.right,
             height = 400 - margin.top - margin.bottom;
 
         const svg = d3
@@ -93,36 +95,6 @@ function LandingPagesLine({ data, containerId }) {
             "#FF4D6D", // Soft Coral
         ];
 
-        // 9) COLOR PALETTE FOR THE LAYERS
-        const color = d3.scaleOrdinal().domain(allNames).range(myColors); // or any palette you like
-
-        const legend = svg
-            .selectAll(".legend")
-            .data(allNames)
-            .enter()
-            .append("g")
-            .attr("class", "legend")
-            // Shift each item downward so they don't overlap
-            .attr("transform", (d, i) => `translate(30, ${i * 20})`);
-
-        // 2) Draw a small colored square for each name
-        // legend
-        //     .append("rect")
-        //     .attr("x", width + 30) // position to the right of the chart
-        //     .attr("y", 10) // small top margin
-        //     .attr("width", 10)
-        //     .attr("height", 10)
-        //     .style("fill", (d) => color(d));
-
-        // 3) Add text labels next to each colored square
-        // legend
-        //     .append("text")
-        //     .attr("x", width + 50) // a bit more to the right of the rectangle
-        //     .attr("y", 18) // roughly in the middle of the rectangle
-        //     .attr("text-anchor", "start")
-        //     .style("alignment-baseline", "middle")
-        //     .style("font-size", "12px")
-        //     .text((d) => d);
 
         const yRight = d3
             .scaleLinear()
@@ -141,91 +113,76 @@ function LandingPagesLine({ data, containerId }) {
             .style("fill", "#000") // Change color if needed
             .text("CVR %"); // Set the label text
 
-        // 1️⃣ Create a tooltip div (hidden by default)
-        // const tooltip = d3
-        //     .select("body")
-        //     .append("div")
-        //     .style("position", "absolute")
-        //     .style("background", "rgba(0, 0, 0, 0.8)")
-        //     .style("color", "white")
-        //     .style("padding", "8px 12px")
-        //     .style("border-radius", "5px")
-        //     .style("font-size", "12px")
-        //     .style("pointer-events", "none") // Ensures it doesn't interfere with mouse events
-        //     .style("opacity", 0); // Initially hidden
-
-        // 1) Determine the very last date in the entire dataset
-        //    (You already sorted dataByYear, so the last entry has the max date)
         const allDates = dataByYear.map(d => d.year);
-const lastDate = d3.max(allDates);
+        const lastDate = d3.max(allDates);
 
-// Keep track of used y-positions
-const usedYPositions = [];
+        // Keep track of used y-positions
+        const usedYPositions = [];
 
-groupedCVRData.forEach((values, name) => {
-    values.sort((a, b) => a.year - b.year);
+        groupedCVRData.forEach((values, name) => {
+            values.sort((a, b) => a.year - b.year);
 
-    const lastPoint = values[values.length - 1];
-    const lastCVR = lastPoint.cvr;
-    let lineColor;
+            const lastPoint = values[values.length - 1];
+            const lastCVR = lastPoint.cvr;
+            let lineColor;
 
-    if (lastCVR > 2) {
-        lineColor = "#012619";
-    } else if (lastCVR < 2) {
-        lineColor = "#8C0B0B";
-    } else {
-        lineColor = "#C2C5C8";
-    }
-
-    // Draw the line
-    svg.append("path")
-        .datum(values)
-        .attr("fill", "none")
-        .attr("stroke", lineColor)
-        .attr("stroke-width", 2)
-        .attr(
-            "d",
-            d3.line()
-                .x((d) => x(d.year))
-                .y((d) => yRight(d.cvr))
-        );
-
-    // Draw circle markers
-    svg.selectAll(`.cvr-dot-${name.replace(/\W/g, "")}`)
-        .data(values)
-        .enter()
-        .append("circle")
-        .attr("cx", (d) => x(d.year))
-        .attr("cy", (d) => yRight(d.cvr))
-        .attr("r", 5)
-        .attr("fill", lineColor)
-        .attr("stroke", "white")
-        .attr("stroke-width", 1);
-
-    // Only add label if it has data for the last date
-    if (+lastPoint.year === +lastDate) {
-        if (lastCVR > 2 || lastCVR < 2) {
-        
-            let labelY = yRight(lastPoint.cvr);
-            
-            // Adjust label position to avoid overlapping
-            while (usedYPositions.some(y => Math.abs(y - labelY) < 10)) {
-                labelY += 20;  // Move it downward
+            if (lastCVR > 2) {
+                lineColor = "#115923";
+            } else if (lastCVR < 2) {
+                lineColor = "#ff5151";
+            } else {
+                lineColor = "#C2C5C8";
             }
-    
-            usedYPositions.push(labelY); // Store the new Y position
-    
-            // Add text label
-            svg.append("text")
-                .attr("x", x(lastPoint.year) + 8)  // Shift right
-                .attr("y", labelY)
-                .attr("dy", "0.35em")  // Vertical centering
+
+            // Draw the line
+            svg.append("path")
+                .datum(values)
+                .attr("fill", "none")
+                .attr("stroke", lineColor)
+                .attr("stroke-width", 2)
+                .attr(
+                    "d",
+                    d3.line()
+                        .x((d) => x(d.year))
+                        .y((d) => yRight(d.cvr))
+                );
+
+            // Draw circle markers
+            svg.selectAll(`.cvr-dot-${name.replace(/\W/g, "")}`)
+                .data(values)
+                .enter()
+                .append("circle")
+                .attr("cx", (d) => x(d.year))
+                .attr("cy", (d) => yRight(d.cvr))
+                .attr("r", 5)
                 .attr("fill", lineColor)
-                .attr("font-size", "12px")
-                .text(`${name} (${lastPoint.cvr.toFixed(2)}%)`);
-        }
-    }
-});
+                .attr("stroke", "white")
+                .attr("stroke-width", 1);
+
+            // Only add label if it has data for the last date
+            if (+lastPoint.year === +lastDate) {
+                if (lastCVR > 2 || lastCVR < 2) {
+
+                    let labelY = yRight(lastPoint.cvr);
+
+                    // Adjust label position to avoid overlapping
+                    while (usedYPositions.some(y => Math.abs(y - labelY) < 10)) {
+                        labelY += 20;  // Move it downward
+                    }
+
+                    usedYPositions.push(labelY); // Store the new Y position
+
+                    // Add text label
+                    svg.append("text")
+                        .attr("x", x(lastPoint.year) + 8)  // Shift right
+                        .attr("y", labelY)
+                        .attr("dy", "0.35em")  // Vertical centering
+                        .attr("fill", lineColor)
+                        .attr("font-size", "12px")
+                        .text(`${name} (${lastPoint.cvr.toFixed(2)}%)`);
+                }
+            }
+        });
 
     }
 

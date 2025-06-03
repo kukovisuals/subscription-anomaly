@@ -315,6 +315,7 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
 }
 
 const partialColorMap = [
+  { keyword: "subscription", color: "#474c5f" },
   { keyword: "rose", color: "#E6B6B1" },
   { keyword: "teal", color: "#2B5977" },
   { keyword: "charisma", color: "#6B1547" },
@@ -402,8 +403,8 @@ const partialColorMap = [
   { keyword: "tuscan", color: "#906C36" },
   { keyword: "champagne", color: "#A28777" },
   { keyword: "cosmic", color: "#018db5" },
+  { keyword: "granada sky", color: "#018db5" },
   { keyword: "sunkissed", color: "#ba8164" },
-  { keyword: "subscription", color: "#474c5f" }
 ];
 
 
