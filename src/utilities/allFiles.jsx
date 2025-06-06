@@ -301,8 +301,12 @@ export const landingPageArrs = [
   // { file: "./data/Sessions by landing page - 2025-05-29 - 2025-05-29.csv", date: "2025-05-29" },
   // { file: "./data/Sessions by landing page - 2025-05-30 - 2025-05-30.csv", date: "2025-05-30" },
   // { file: "./data/Sessions by landing page - 2025-05-31 - 2025-05-31.csv", date: "2025-05-31" },
-  { file: "./data/Sessions by landing page - 2025-06-01 - 2025-06-01.csv", date: "2025-06-01" },
-  { file: "./data/Sessions by landing page - 2025-06-02 - 2025-06-02.csv", date: "2025-06-02" },
+  // { file: "./data/Sessions by landing page - 2025-06-01 - 2025-06-01.csv", date: "2025-06-01" },
+  // { file: "./data/Sessions by landing page - 2025-06-02 - 2025-06-02.csv", date: "2025-06-02" },
+  // { file: "./data/Sessions by landing page - 2025-06-03 - 2025-06-03.csv", date: "2025-06-03" },
+  { file: "./data/Sessions by landing page - 2025-06-04 - 2025-06-04.csv", date: "2025-06-04" },
+  { file: "./data/Sessions by landing page - 2025-06-05 - 2025-06-05.csv", date: "2025-06-05" },
+  // { file: "./data/Sessions by landing page - 2025-05-30 - 2025-06-06.csv", date: "2025-06-05" },
   
 ]
 
@@ -318,7 +322,9 @@ export const inventoryFiles = [
 export const setsBundles = [
   // { file: "./data/Sessions by referrer + landing page  - 2025-05-25 - 2025-05-25.csv", data: "2025-05-27"},
   // { file: "./data/Sessions by referrer + landing page  - 2025-06-01 - 2025-06-01.csv", data: "2025-06-01"},
-  { file: "./data/Sessions by referrer + landing page  - 2025-06-02 - 2025-06-02.csv", data: "2025-06-02"},
+  // { file: "./data/Sessions by referrer + landing page  - 2025-06-02 - 2025-06-02.csv", data: "2025-06-02"},
+  { file: "./data/Sessions by referrer + landing page  - 2025-06-03 - 2025-06-03.csv", data: "2025-06-03"},
+  // { file: "./data/Sessions by referrer + landing page  - 2025-06-04 - 2025-06-04.csv", data: "2025-06-04"}
 ];
 
 export const customBundler = [

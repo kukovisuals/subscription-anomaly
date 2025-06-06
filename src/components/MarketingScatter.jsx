@@ -10,7 +10,7 @@ import * as d3 from "d3";
  * @param {number} width - SVG width
  * @param {number} height - SVG height
  */
-function MarketingScatter({ data, filterByLandingPageType = 'best-sellers', width = 1200, height = 600 }) {
+function MarketingScatter({ data, filterByLandingPageType = 'product-black-relief-bra', width = 1200, height = 600 }) {
     const svgRef = useRef(null);
 
     useEffect(() => {
@@ -342,7 +342,7 @@ function MarketingScatter({ data, filterByLandingPageType = 'best-sellers', widt
             .attr("text-anchor", "middle")
             .style("font-size", "14px")
             .attr("fill", "#666")
-            .text(`${data.summary.lowPerformingCampaigns} of ${data.summary.totalCampaigns} campaigns below 2% CVR | Overall CVR: ${data.summary.overallCVR}%`);
+            .text(`${filteredLowPerforming} of ${filteredData.length} campaigns below 2% CVR | Filtered CVR: ${filteredCVR.toFixed(2)}%`);
 
         // Cleanup function
         return () => {

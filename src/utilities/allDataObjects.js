@@ -450,7 +450,9 @@ function classifyLandingPage(url) {
     const match = lowerUrl.match(/collections\/([^?&/]+)/);
     return match ? `collection-${match[1]}` : 'collection';
   } else if (lowerUrl.includes('/products/')) {
-    return 'product-page';
+    // Extract specific product name after 'products/'
+    const match = lowerUrl.match(/products\/([^?&/]+)/);
+    return match ? `product-${match[1]}` : 'product-page';
   } else if (lowerUrl === 'https://shop.join-eby.com/' || lowerUrl.endsWith('join-eby.com/')) {
     return 'homepage';
   } else {

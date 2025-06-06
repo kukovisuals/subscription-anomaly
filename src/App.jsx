@@ -103,9 +103,9 @@ function App() {
         {view === "landingPages" && (
           <div>
             <h2>Landing Pages - Cart sessions over 100/day</h2>
-            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions > 100 && d.name !== "/")} containerId="chart-high" />
+            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions > 100)} containerId="chart-high" />
             <h3>Sessions</h3>
-            <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions > 100 && d.name !== "/")} containerId="bar-chart-high" />
+            <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions > 100)} containerId="bar-chart-high" />
             <h2>Landing Pages - Cart sessions 30-100/day</h2>
             <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 100 && d.cartAdditions > 30)} containerId="chart-mid" />
             <h3>Sessions</h3>
