@@ -5,7 +5,7 @@ function groupOrdersByBundleType(arrObj) {
     return d3.group(arrObj, d => {
       // Find the _title property for this order
       const titleProp = d.lineitemProperties.find(prop => prop.name === '_title');
-      return titleProp ? titleProp.value : 'No Bundle Type';
+      return titleProp ? titleProp.value : '';
     });
 }
 
@@ -19,44 +19,62 @@ function CustomBuilder({ data, containerId }) {
     function drawChart(data) {
         d3.select(`#${containerId}`).selectAll("*").remove();
 
-        console.log(data);
+        console.log("Total data length:", data.length);
 
-        const margin = { top: 100, right: 50, bottom: 80, left: 80 },
+        // Group orders by bundle type
+        const groupedOrders = groupOrdersByBundleType(data);
+        console.log("Available bundle types:", Array.from(groupedOrders.keys()));
+        
+        // Log the count for each group
+        groupedOrders.forEach((orders, key) => {
+            console.log(`"${key}": ${orders.length} orders`);
+        });
+
+        // Get valid bundle types (exclude empty ones)
+        const validBundleTypes = Array.from(groupedOrders.keys()).filter(key => key !== "" && key !== "No Bundle Type");
+        
+        if (validBundleTypes.length === 0) {
+            d3.select(`#${containerId}`)
+                .append("div")
+                .style("text-align", "center")
+                .style("padding", "50px")
+                .text("No valid bundle types found");
+            return;
+        }
+
+        // Create a chart for each bundle type
+        validBundleTypes.forEach((bundleType, index) => {
+            const orders = groupedOrders.get(bundleType);
+            createChart(orders, bundleType, index);
+        });
+    }
+
+    function createChart(orders, bundleType, index) {
+        const margin = { top: 80, right: 50, bottom: 80, left: 80 },
             width = 1000 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom;
+            height = 400 - margin.top - margin.bottom;
 
-        const svg = d3
-            .select(`#${containerId}`)
+        // Create container div for this chart
+        const chartContainer = d3.select(`#${containerId}`)
+            .append("div")
+            .style("margin-bottom", "40px");
+
+        const svg = chartContainer
             .append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-        // Group orders by bundle type
-        const groupedOrders = groupOrdersByBundleType(data);
-        
-        // Get only "Bikini Mystery Pack" orders
-        const bikiniOrders = groupedOrders.get("") || [];
-        
-        if (bikiniOrders.length === 0) {
-            svg.append("text")
-                .attr("x", width / 2)
-                .attr("y", height / 2)
-                .attr("text-anchor", "middle")
-                .text("Null Pack orders found");
-            return;
-        }
-
         // Parse dates and group by day
-        bikiniOrders.forEach(d => {
+        orders.forEach(d => {
             d.parsedDate = new Date(d.createdAt);
             d.dateString = d3.timeFormat("%Y-%m-%d")(d.parsedDate);
         });
 
         // Group by date and count units (numberOfItems) per day
         const dailyData = d3.rollup(
-            bikiniOrders,
+            orders,
             v => d3.sum(v, d => d.numberOfItems), // Sum numberOfItems for each day
             d => d.dateString
         );
@@ -67,7 +85,16 @@ function CustomBuilder({ data, containerId }) {
             units: units
         })).sort((a, b) => a.date - b.date);
 
-        console.log("Daily Bikini Mystery Pack sales:", chartData);
+        console.log(`${bundleType} daily data:`, chartData);
+
+        if (chartData.length === 0) {
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height / 2)
+                .attr("text-anchor", "middle")
+                .text(`No daily data for ${bundleType}`);
+            return;
+        }
 
         // Set up scales
         const xScale = d3.scaleBand()
@@ -145,7 +172,7 @@ function CustomBuilder({ data, containerId }) {
             .attr("text-anchor", "middle")
             .style("font-size", "16px")
             .style("font-weight", "bold")
-            .text("Emtpy  - Daily Units Sold");
+            .text(`${bundleType} - Daily Units Sold`);
 
         // Add summary info
         const totalUnits = d3.sum(chartData, d => d.units);
