@@ -1,27 +1,3 @@
-/*
- 
-{"Tortoise Relief Bra" => Array(766)}
-1
-: 
-{"" => Array(19)}
-2
-: 
-{"Bikini Mystery Pack" => Array(1563)}
-3
-: 
-{"Black Support Bra Set" => Array(66)}
-4
-: 
-{"Bra Set" => Array(72)}
-5
-: 
-{"Bra & Panty Set" => Array(2045)}
-6
-: 
-{"Bra Bundle" => Array(3072)}
-*/
-
-
 import { useEffect } from "react";
 import * as d3 from "d3";
 

@@ -282,315 +282,188 @@ function cleanTokens(text) {
 /*
   * Marketing data
 */
-export async function marketingResources(files) {
-  let allData = [];
 
+/**
+ * Processes marketing CSV files and returns structured campaign performance data.
+ * 
+ * Groups data by URL types (products, collections, homepage) and analyzes 
+ * conversion rates and sessions across different marketing platforms.
+ *
+ * @param {Array} files - Array of file objects with { file, date }
+ * @returns {Promise<Object>} Structured marketing performance data
+ */
+export async function marketingResources(files) {
+  let allSessionData = [];
+
+  // Process each CSV file
   for (const { file, date } of files) {
     const data = await d3.csv(file, (d) => {
-      const marketingInfo = extractMarketingInfo(d["Landing page URL"] || "");
-      const landingPageType = classifyLandingPage(d["Landing page URL"] || "");
+      // Skip rows with missing essential data
+      if (!d["Landing page URL"] || !d["Sessions"]) return null;
 
-      return {
-        year: date,
-        referrerSource: d["Referrer source"] || "unknown",
-        referrerName: d["Referrer name"] || "unknown", 
-        sessionRegion: d["Session region"] || "unknown",
-        landingPageUrl: d["Landing page URL"] || "",
-        landingPageType: landingPageType,
-        sessions: +d["Sessions"] || 0,
-        conversionRate: +d["Conversion rate"] || 0,
-        conversions: Math.round((+d["Sessions"] || 0) * (+d["Conversion rate"] || 0)),
-        visitors: +d["Online store visitors"] || 0,
-        cartAdditions: +d["Sessions with cart additions"] || 0,
-        // Marketing attribution
-        platform: marketingInfo.platform,
-        campaign: marketingInfo.campaign,
-        influencer: marketingInfo.influencer,
-        channel: marketingInfo.channel,
-        medium: marketingInfo.medium,
-        isPaid: marketingInfo.isPaid,
-        isWhitelisting: marketingInfo.isWhitelisting
-      };
-    });
-    allData.push(...data);
-  }
+      const landingUrl = d["Landing page URL"];
+      let urlType = "other";
+      let urlPath = "";
 
-  return generateCVRAnalysis(allData);
-}
-
-// Helper function to extract marketing information from URLs
-function extractMarketingInfo(url) {
-  if (!url || url === '') {
-    return {
-      platform: 'unknown',
-      campaign: 'unknown',
-      influencer: null,
-      channel: 'Direct',
-      medium: null,
-      isPaid: false,
-      isWhitelisting: false
-    };
-  }
-
-  const lowerUrl = url.toLowerCase();
-  let platform = 'unknown';
-  let campaign = 'unknown';
-  let influencer = null;
-  let channel = 'Direct';
-  let medium = null;
-  let isPaid = false;
-  let isWhitelisting = false;
-
-  // Extract URL parameters
-  let params = {};
-  try {
-    const urlObj = new URL(url);
-    urlObj.searchParams.forEach((value, key) => {
-      params[key] = decodeURIComponent(value);
-    });
-  } catch (e) {
-    // If URL parsing fails, try to extract from query string
-    const queryString = url.split('?')[1];
-    if (queryString) {
-      const pairs = queryString.split('&');
-      pairs.forEach(pair => {
-        const [key, value] = pair.split('=');
-        if (key && value) {
-          params[key] = decodeURIComponent(value);
+      try {
+        const urlObj = new URL(landingUrl);
+        const pathname = urlObj.pathname;
+        
+        // Categorize URL types
+        if (pathname === "/" || pathname === "") {
+          urlType = "homepage";
+          urlPath = "homepage";
+        } else if (pathname.startsWith("/products/")) {
+          urlType = "product";
+          urlPath = pathname.replace("/products/", "");
+        } else if (pathname.startsWith("/collections/")) {
+          urlType = "collection";
+          urlPath = pathname.replace("/collections/", "");
         }
-      });
-    }
+
+        // Extract UTM parameters
+        const utmSource = urlObj.searchParams.get('utm_source') || "";
+        const utmMedium = urlObj.searchParams.get('utm_medium') || "";
+        const utmCampaign = urlObj.searchParams.get('utm_campaign') || "";
+
+        // Determine platform from UTM source or referrer
+        let platform = "other";
+        const referrerName = (d["Referrer name"] || "").toLowerCase();
+        const source = utmSource.toLowerCase();
+
+        if (source === "ig" || referrerName.includes("instagram")) {
+          platform = "instagram";
+        } else if (source === "fb" || referrerName.includes("facebook") || referrerName.includes("meta")) {
+          platform = "facebook";
+        } else if (source === "klaviyo" || utmMedium === "email") {
+          platform = "klaviyo";
+        } else if (source === "postscript" || utmMedium === "sms") {
+          platform = "postscript";
+        } else if (source === "ltk" || referrerName.includes("rstyle")) {
+          platform = "ltk";
+        } else if (source === "shopmy") {
+          platform = "shopmy";
+        } else if (source === "awin" || utmMedium === "affiliate") {
+          platform = "awin";
+        }
+
+        return {
+          date: new Date(date),
+          landingUrl,
+          urlType,
+          urlPath,
+          platform,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          referrerSource: d["Referrer source"] || "",
+          referrerName: d["Referrer name"] || "",
+          sessions: +d["Sessions"] || 0,
+          visitors: +d["Online store visitors"] || 0,
+          conversionRate: +d["Conversion rate"] || 0,
+          cartAdditions: +d["Sessions with cart additions"] || 0
+        };
+      } catch (error) {
+        // Handle malformed URLs
+        return null;
+      }
+    });
+
+    allSessionData.push(...data.filter(Boolean));
   }
 
-  // Platform detection
-  if (params.platform) {
-    platform = params.platform;
-  } else if (params.utm_source) {
-    platform = params.utm_source;
-  } else if (lowerUrl.includes('facebook') || lowerUrl.includes('fb')) {
-    platform = 'facebook';
-  } else if (lowerUrl.includes('instagram')) {
-    platform = 'instagram';
-  } else if (lowerUrl.includes('tiktok')) {
-    platform = 'tiktok';
-  } else if (lowerUrl.includes('youtube')) {
-    platform = 'youtube';
-  } else if (lowerUrl.includes('grin')) {
-    platform = 'grin';
-  } else if (lowerUrl.includes('shopmy')) {
-    platform = 'ShopMy';
-  }
-
-  // Campaign detection
-  if (params.utm_campaign) {
-    campaign = params.utm_campaign;
-  } else if (params.campaign) {
-    campaign = params.campaign;
-  }
-
-  // Influencer detection
-  if (params.utm_term) {
-    influencer = params.utm_term;
-  } else if (platform === 'ShopMy' && campaign !== 'unknown') {
-    influencer = campaign; // ShopMy uses campaign field for influencer names
-  }
-
-  // Medium detection
-  if (params.utm_medium) {
-    medium = params.utm_medium;
-    if (medium === 'whitelisting') {
-      isWhitelisting = true;
-      isPaid = true;
-    }
-  }
-
-  // Channel classification
-  if (isWhitelisting) {
-    channel = 'Paid Social - Whitelisting';
-  } else if (platform === 'grin' || platform === 'Grin') {
-    channel = 'Influencer Marketing - Grin';
-  } else if (platform === 'ShopMy') {
-    channel = 'Influencer Marketing - ShopMy';
-  } else if (platform === 'organicsocial') {
-    channel = 'Organic Social';
-  } else if (platform === 'search') {
-    channel = 'Search';
-  } else if (platform === 'postscript') {
-    channel = 'SMS Marketing';
-  } else if (platform === 'Klaviyo') {
-    channel = 'Email Marketing';
-  } else if (platform === 'direct') {
-    channel = 'Direct';
-  } else if (platform !== 'unknown') {
-    channel = 'Other Paid';
-    isPaid = true;
-  }
-
-  return {
-    platform,
-    campaign,
-    influencer,
-    channel,
-    medium,
-    isPaid,
-    isWhitelisting
-  };
-}
-
-// Helper function to classify landing pages
-function classifyLandingPage(url) {
-  if (!url) return 'unknown';
+  // Group data by URL type and platform
+  const groupedByUrlType = _.groupBy(allSessionData, "urlType");
   
-  const lowerUrl = url.toLowerCase();
-  
-  if (lowerUrl.includes('best-seller')) {
-    return 'best-sellers';
-  } else if (lowerUrl.includes('collections/')) {
-    // Extract collection name after 'collections/'
-    const match = lowerUrl.match(/collections\/([^?&/]+)/);
-    return match ? `collection-${match[1]}` : 'collection';
-  } else if (lowerUrl.includes('/products/')) {
-    // Extract specific product name after 'products/'
-    const match = lowerUrl.match(/products\/([^?&/]+)/);
-    return match ? `product-${match[1]}` : 'product-page';
-  } else if (lowerUrl === 'https://shop.join-eby.com/' || lowerUrl.endsWith('join-eby.com/')) {
-    return 'homepage';
-  } else {
-    return 'other';
-  }
-}
+  // Analyze performance by platform for each URL type
+  const performanceAnalysis = {};
 
-// Helper function to generate CVR analysis data
-function generateCVRAnalysis(allData) {
-  // Group ALL data by platform, campaign, and landing page type (not just best-sellers)
-  const campaignGroups = groupByCampaign(allData);
-  
-  // Calculate CVR metrics for each campaign-landing page combination
-  const cvrAnalysis = campaignGroups.map(group => {
-    const weightedCVR = group.totalSessions > 0 ? 
-      (group.totalConversions / group.totalSessions) * 100 : 0;
+  for (const [urlType, urlData] of Object.entries(groupedByUrlType)) {
+    const platformGroups = _.groupBy(urlData, "platform");
     
-    return {
-      platform: group.platform,
-      campaign: group.campaign,
-      channel: group.channel,
-      influencer: group.influencer,
-      landingPageType: group.landingPageType,
-      totalSessions: group.totalSessions,
-      totalConversions: group.totalConversions,
-      totalVisitors: group.totalVisitors,
-      totalCartAdditions: group.totalCartAdditions,
-      conversionRate: Math.round(weightedCVR * 100) / 100,
-      isLowPerforming: weightedCVR < 2.0, // Below 2% CVR
-      performanceLevel: getPerformanceLevel(weightedCVR),
-      dataPoints: group.dataPoints,
-      regions: group.regions,
-      landingPages: group.landingPages,
-      uniqueLandingPages: group.uniqueLandingPages
-    };
-  })
-  .filter(item => item.totalSessions >= 5) // Filter for meaningful traffic
-  .sort((a, b) => a.conversionRate - b.conversionRate); // Sort by CVR ascending
+    performanceAnalysis[urlType] = {};
+    
+    for (const [platform, platformData] of Object.entries(platformGroups)) {
+      // Skip if not one of our target platforms
+      const targetPlatforms = ["instagram", "facebook", "klaviyo", "postscript", "ltk", "shopmy", "awin"];
+      if (!targetPlatforms.includes(platform)) continue;
 
-  // Calculate overall metrics for ALL data
-  const totalSessions = allData.reduce((sum, row) => sum + row.sessions, 0);
-  const totalConversions = allData.reduce((sum, row) => sum + row.conversions, 0);
-  const overallCVR = totalSessions > 0 ? (totalConversions / totalSessions) * 100 : 0;
+      // Calculate aggregated metrics
+      const totalSessions = _.sumBy(platformData, "sessions");
+      const totalVisitors = _.sumBy(platformData, "visitors");
+      const totalCartAdditions = _.sumBy(platformData, "cartAdditions");
+      
+      // Calculate weighted conversion rate
+      const totalConversions = _.sumBy(platformData, d => d.sessions * d.conversionRate);
+      const avgConversionRate = totalSessions > 0 ? totalConversions / totalSessions : 0;
 
-  // Calculate best-sellers specific metrics for backward compatibility
-  const bestSellersData = allData.filter(row => row.landingPageType === 'best-sellers');
-  const bestSellersSessions = bestSellersData.reduce((sum, row) => sum + row.sessions, 0);
-  const bestSellersConversions = bestSellersData.reduce((sum, row) => sum + row.conversions, 0);
-  const bestSellersCVR = bestSellersSessions > 0 ? (bestSellersConversions / bestSellersSessions) * 100 : 0;
+      // Get unique URLs for this platform
+      const uniqueUrls = _.uniqBy(platformData, "landingUrl").length;
+      
+      // Get top performing URLs
+      const urlPerformance = _(platformData)
+        .groupBy("urlPath")
+        .map((urlData, urlPath) => ({
+          urlPath,
+          sessions: _.sumBy(urlData, "sessions"),
+          conversionRate: _.sumBy(urlData, d => d.sessions * d.conversionRate) / _.sumBy(urlData, "sessions"),
+          cartAdditions: _.sumBy(urlData, "cartAdditions")
+        }))
+        .orderBy("sessions", "desc")
+        .take(5)
+        .value();
 
-  // Get unique landing page types for filtering options
-  const landingPageTypes = [...new Set(allData.map(row => row.landingPageType))];
+      performanceAnalysis[urlType][platform] = {
+        totalSessions,
+        totalVisitors,
+        totalCartAdditions,
+        avgConversionRate,
+        uniqueUrls,
+        topUrls: urlPerformance,
+        rawDataCount: platformData.length
+      };
+    }
+  }
 
-  return {
-    summary: {
-      totalCampaigns: cvrAnalysis.length,
-      lowPerformingCampaigns: cvrAnalysis.filter(c => c.isLowPerforming).length,
+  // Calculate overall platform performance
+  const overallPlatformPerformance = {};
+  const platformGroups = _.groupBy(allSessionData, "platform");
+
+  for (const [platform, platformData] of Object.entries(platformGroups)) {
+    const targetPlatforms = ["instagram", "facebook", "klaviyo", "postscript", "ltk", "shopmy", "awin"];
+    if (!targetPlatforms.includes(platform)) continue;
+
+    const totalSessions = _.sumBy(platformData, "sessions");
+    const totalVisitors = _.sumBy(platformData, "visitors");
+    const totalCartAdditions = _.sumBy(platformData, "cartAdditions");
+    const totalConversions = _.sumBy(platformData, d => d.sessions * d.conversionRate);
+    const avgConversionRate = totalSessions > 0 ? totalConversions / totalSessions : 0;
+
+    overallPlatformPerformance[platform] = {
       totalSessions,
-      totalConversions,
-      overallCVR: Math.round(overallCVR * 100) / 100,
-      benchmarkCVR: 2.0,
-      // Best-sellers specific metrics
-      bestSellersSessions,
-      bestSellersConversions,
-      bestSellersCVR: Math.round(bestSellersCVR * 100) / 100,
-      // Available landing page types for filtering
-      availableLandingPageTypes: landingPageTypes
+      totalVisitors,
+      totalCartAdditions,
+      avgConversionRate: avgConversionRate * 100, // Convert to percentage
+      cartAdditionRate: totalSessions > 0 ? (totalCartAdditions / totalSessions) * 100 : 0
+    };
+  }
+
+  return {
+    performanceByUrlType: performanceAnalysis,
+    overallPlatformPerformance,
+    totalSessionsAnalyzed: allSessionData.length,
+    dateRange: {
+      start: _.minBy(allSessionData, "date")?.date,
+      end: _.maxBy(allSessionData, "date")?.date
     },
-    campaigns: cvrAnalysis,
-    lowPerformers: cvrAnalysis.filter(c => c.isLowPerforming),
-    topPerformers: cvrAnalysis.filter(c => !c.isLowPerforming).slice(-5).reverse(),
-    allData: allData, // Include full dataset for additional analysis
-    bestSellersData: bestSellersData, // Include filtered best-sellers data
-    // Helper function to filter by landing page type
-    filterByLandingPageType: function(landingPageType) {
-      return {
-        campaigns: this.campaigns.filter(c => c.landingPageType === landingPageType),
-        summary: {
-          ...this.summary,
-          filteredType: landingPageType,
-          filteredCampaigns: this.campaigns.filter(c => c.landingPageType === landingPageType).length,
-          filteredLowPerforming: this.campaigns.filter(c => c.landingPageType === landingPageType && c.isLowPerforming).length
-        }
-      };
-    }
+    platformBreakdown: _(allSessionData)
+      .groupBy("platform")
+      .mapValues(data => ({
+        sessions: _.sumBy(data, "sessions"),
+        percentage: (_.sumBy(data, "sessions") / _.sumBy(allSessionData, "sessions")) * 100
+      }))
+      .value()
   };
-}
-
-// Helper function to group data by campaign and landing page type
-function groupByCampaign(data) {
-  const groups = {};
-  
-  data.forEach(row => {
-    const key = `${row.platform}|${row.campaign}|${row.landingPageType}`;
-    
-    if (!groups[key]) {
-      groups[key] = {
-        platform: row.platform,
-        campaign: row.campaign,
-        channel: row.channel,
-        influencer: row.influencer,
-        landingPageType: row.landingPageType,
-        totalSessions: 0,
-        totalConversions: 0,
-        totalVisitors: 0,
-        totalCartAdditions: 0,
-        dataPoints: 0,
-        regions: new Set(),
-        landingPages: new Set()
-      };
-    }
-    
-    groups[key].totalSessions += row.sessions;
-    groups[key].totalConversions += row.conversions;
-    groups[key].totalVisitors += row.visitors;
-    groups[key].totalCartAdditions += row.cartAdditions;
-    groups[key].dataPoints += 1;
-    groups[key].regions.add(row.sessionRegion);
-    groups[key].landingPages.add(row.landingPageUrl);
-  });
-  
-  // Convert sets to arrays and return values
-  return Object.values(groups).map(group => ({
-    ...group,
-    regions: Array.from(group.regions),
-    landingPages: Array.from(group.landingPages),
-    uniqueLandingPages: group.landingPages.size
-  }));
-}
-
-// Helper function to classify performance levels
-function getPerformanceLevel(cvr) {
-  if (cvr === 0) return 'Critical';
-  if (cvr < 1) return 'Poor';
-  if (cvr < 2) return 'Below Average';
-  if (cvr < 3) return 'Average';
-  if (cvr < 5) return 'Good';
-  return 'Excellent';
 }
 /*
   * Bundle data
@@ -648,36 +521,4 @@ export async function allOrdersWithBundleInfo(files) {
   }
 
   return allData;
-}
-
-function getPatchUrl(url) 
-{
-  const splitUrl = url.split(".com");
-  let finalPath = "";
-  if(splitUrl.length > 0 && splitUrl[1] !== undefined)
-  {
-    finalPath = splitUrl[1].split("?")[0];
-  } 
-  return finalPath;
-}
-
-export async function inventoryData(files) {
-  let allData = [];
-
-  for (const { file, date } of files) {
-    const data = await d3.csv(file, (d) => {
-      // return {
-      //   year: date,
-      //   name: d["Landing page path"] || "UNKNOWN",
-      //   n: +d["Sessions"] || 0,
-      //   cartAdditions: +d["Sessions with cart additions"] || 0,
-      //   cvr: +d["Conversion rate"] * 100 || 0, // Ensure it's a number
-      // };
-      console.log(d)
-    });
-    // allData.push(...data);
-  }
-  // Group by date
-  return allData
-
 }

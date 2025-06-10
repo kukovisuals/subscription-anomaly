@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps, inventoryFiles, setsBundles, customBundler } from './utilities/allFiles';
-import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens, inventoryData, marketingResources, allOrdersWithBundleInfo } from './utilities/allDataObjects';
+import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps, setsBundles, customBundler } from './utilities/allFiles';
+import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens, marketingResources, allOrdersWithBundleInfo } from './utilities/allDataObjects';
 
 import CheaterScatterPlot from './components/CheaterScatterPlot';
 import StackedBars from './components/StackProducts';
@@ -114,10 +114,10 @@ function App() {
             <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 30 && d.cartAdditions > 10)} containerId="chart-low" />
             <h3>Sessions</h3>
             <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions < 30 && d.cartAdditions > 10)} containerId="bar-chart-low" />
-            <h2>Landing Pages - Cart sessions 10-30/day</h2>
-            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 30 && d.cartAdditions > 10)} containerId="chart-low-low" />
+            <h2>Landing Pages - Cart sessions 5-10/day</h2>
+            <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 10 && d.cartAdditions > 5)} containerId="chart-low-low" />
             <h3>Sessions</h3>
-            <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions < 30 && d.cartAdditions > 10)} containerId="bar-chart-low-low" />
+            <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions < 10 && d.cartAdditions > 5)} containerId="bar-chart-low-low" />
             {/* <h2>Landing Pages - Cart sessions 10-50/day</h2>
             <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 20 && d.cartAdditions > 10)} containerId="chart-low-low" /> */}
           </div>
