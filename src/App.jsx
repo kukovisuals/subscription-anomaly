@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import * as d3 from "d3";
 import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps, setsBundles, customBundler } from './utilities/allFiles';
 import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens, marketingResources, allOrdersWithBundleInfo } from './utilities/allDataObjects';
 
@@ -33,6 +34,21 @@ function App() {
   const [loading, setLoading] = useState(true);
   const isFirstRender = useRef(true);
 
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const csvText = e.target.result;
+      const customBuildCsv = await allOrdersWithBundleInfo(customBundler);
+      setCustomBuildSet(customBuildCsv);
+      // const data = d3.csv(csvText);
+      console.log('CSV Data:', customBuildCsv);
+    };
+    reader.readAsText(file);
+  };
+
   useEffect(() => {
     if (!isFirstRender.current) return;
     isFirstRender.current = false;
@@ -47,17 +63,15 @@ function App() {
         const reviewsTextCsv = await reviewsTokens(reviewsStamps);
         // const inventoryDataCsv = await inventoryData(inventoryFiles);
         const marketingDataCsv = await marketingResources(setsBundles);
-        const customBuildCsv = await allOrdersWithBundleInfo(customBundler);
+        // const customBuildCsv = await allOrdersWithBundleInfo(customBundler);
         
-        // const typesSetBuilder = customBuildCsv(customBuildCsv);
-
         setSankeyData(suspiciousOrders);
         setProductData(productOrders);
         setLandingPagesCn(landingPagesCsv);
         setReviewsData(reviewsCsv);
         setTextReviewsData(reviewsTextCsv);
         setMarketingData(marketingDataCsv);
-        setCustomBuildSet(customBuildCsv);
+        // setCustomBuildSet(customBuildCsv);
 
         setSankeyDataRelief(suspiciousOrders.filter(order => order.items[0]?.subsType === "Custom Relief Bra Set Subscription Box"));
         setSankeyDataSupport(suspiciousOrders.filter(order => order.items[0]?.subsType === "Custom Support Bra Set Subscription Box"));
@@ -142,6 +156,13 @@ function App() {
 
         {view === "bundler" && (
           <div>
+            <h3>Add EOM File from ez exporter</h3>
+            <input 
+              type="file" 
+              accept=".csv" 
+              placeholder="add file"
+              onChange={handleFileUpload} 
+            />
             <CustomBuilder data={customBuildSet} containerId="d-custom-builder"/>
           </div>
         )}
