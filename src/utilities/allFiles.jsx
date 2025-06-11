@@ -307,8 +307,9 @@ export const landingPageArrs = [
   // { file: "./data/Sessions by landing page - 2025-06-04 - 2025-06-04.csv", date: "2025-06-04" },
   // { file: "./data/Sessions by landing page - 2025-06-05 - 2025-06-05.csv", date: "2025-06-05" },
   // { file: "./data/Sessions by landing page - 2025-06-07 - 2025-06-07.csv", date: "2025-06-07" },
-  { file: "./data/Sessions by landing page - 2025-06-08 - 2025-06-08.csv", date: "2025-06-08" },
+  // { file: "./data/Sessions by landing page - 2025-06-08 - 2025-06-08.csv", date: "2025-06-08" },
   { file: "./data/Sessions by landing page - 2025-06-09 - 2025-06-09.csv", date: "2025-06-09" },
+  { file: "./data/Sessions by landing page - 2025-06-10 - 2025-06-10.csv", date: "2025-06-10" },
 ]
 
 export const reviewsStamps = [
