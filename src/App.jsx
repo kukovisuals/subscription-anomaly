@@ -156,7 +156,7 @@ function App() {
 
         {view === "bundler" && (
           <div>
-            <h3>Add EOM File from ez exporter</h3>
+            <h3>Add EOM File from EZ exporter</h3>
             <input 
               type="file" 
               accept=".csv" 
