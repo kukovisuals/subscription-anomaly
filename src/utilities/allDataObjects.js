@@ -292,7 +292,7 @@ function cleanTokens(text) {
  * @param {Array} files - Array of file objects with { file, date }
  * @returns {Promise<Object>} Structured marketing performance data
  */
-export async function marketingResources(files) {
+export async function marketingResources([files]) {
   let allSessionData = [];
 
   // Process each CSV file
@@ -348,7 +348,7 @@ export async function marketingResources(files) {
         }
 
         return {
-          date: new Date(date),
+          date: new Date("2025-06-06"),
           landingUrl,
           urlType,
           urlPath,
