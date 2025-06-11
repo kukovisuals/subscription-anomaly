@@ -5,24 +5,20 @@ import * as d3 from "d3";
 
 function LandingPagesLine({ data, containerId }) {
     useEffect(() => {
-        // console.log('new data coming in ', data);
-        // 1) Ensure we have data to visualize
         if (!data || data.length === 0) return;
 
-        // 2) Call our D3 chart-creation logic
         drawChart(data);
     }, [data]);
 
     function drawChart(data) {
-        // 1) Clear the container each time so we don’t double‐draw
         d3.select(`#${containerId}`).selectAll("*").remove();
 
-        // 2) Set dimensions and margins
+        console.log(data);
+
         const margin = { top: 10, right: 300, bottom: 30, left: 60 },
-            width = 900 - margin.left - margin.right,
+            width = 1000 - margin.left - margin.right,
             height = 400 - margin.top - margin.bottom;
 
-        // 3) Append the SVG object to our container div
         const svg = d3
             .select(`#${containerId}`)
             .append("svg")
@@ -31,7 +27,6 @@ function LandingPagesLine({ data, containerId }) {
             .append("g")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-        // 4) Group the data by `name` (Landing Page Path)
         const groupedCVRData = d3.group(data, (d) => d.name);
 
         data.forEach((d) => {
@@ -64,41 +59,19 @@ function LandingPagesLine({ data, containerId }) {
             // rollups() returns an array of [key, value], so map it to just the objects:
             .map(([year, obj]) => obj);
 
-        // 5) SORT dataByYear by date if needed
+
         dataByYear.sort((a, b) => a.year - b.year);
 
-        // 6) CREATE THE STACK GENERATOR
-        // const stack = d3
-        //     .stack()
-        //     .keys(allNames) // all the "name" fields
-        //     .value((d, key) => d[key] || 0); // handle missing keys safely
-
-
-        // console.log("data by year", dataByYear);
-        // console.log("All names", allNames)
-        
-        // const stackedData = stack(dataByYear);
-
-        // 7) CREATE SCALES
-        //    X scale -> time scale from earliest to latest
         const x = d3
             .scaleTime()
             .domain(d3.extent(dataByYear, (d) => d.year))
             .range([0, width]);
 
-        //    Y scale -> from 0 up to the max of stacked sums
-        // const y = d3.scaleLinear()
-        // .domain([0, d3.max(stackedData, layer => d3.max(layer, d => d[1]))])
-        // .range([height, 0]);
-
-        // 8) ADD AXES
         svg
             .append("g")
             .attr("transform", `translate(0, ${height})`)
             .call(d3.axisBottom(x).ticks(2));
 
-        // svg.append("g")
-        // .call(d3.axisLeft(y));
         const myColors = [
             "#BFBFBF", // Vibrant Red FF006E verde 015958
             "#015958", // Orange BFBFBF
@@ -122,36 +95,6 @@ function LandingPagesLine({ data, containerId }) {
             "#FF4D6D", // Soft Coral
         ];
 
-        // 9) COLOR PALETTE FOR THE LAYERS
-        const color = d3.scaleOrdinal().domain(allNames).range(myColors); // or any palette you like
-
-        const legend = svg
-            .selectAll(".legend")
-            .data(allNames)
-            .enter()
-            .append("g")
-            .attr("class", "legend")
-            // Shift each item downward so they don't overlap
-            .attr("transform", (d, i) => `translate(30, ${i * 20})`);
-
-        // 2) Draw a small colored square for each name
-        legend
-            .append("rect")
-            .attr("x", width + 30) // position to the right of the chart
-            .attr("y", 10) // small top margin
-            .attr("width", 10)
-            .attr("height", 10)
-            .style("fill", (d) => color(d));
-
-        // 3) Add text labels next to each colored square
-        legend
-            .append("text")
-            .attr("x", width + 50) // a bit more to the right of the rectangle
-            .attr("y", 18) // roughly in the middle of the rectangle
-            .attr("text-anchor", "start")
-            .style("alignment-baseline", "middle")
-            .style("font-size", "12px")
-            .text((d) => d);
 
         const yRight = d3
             .scaleLinear()
@@ -170,100 +113,77 @@ function LandingPagesLine({ data, containerId }) {
             .style("fill", "#000") // Change color if needed
             .text("CVR %"); // Set the label text
 
-        // 1️⃣ Create a tooltip div (hidden by default)
-        const tooltip = d3
-            .select("body")
-            .append("div")
-            .style("position", "absolute")
-            .style("background", "rgba(0, 0, 0, 0.8)")
-            .style("color", "white")
-            .style("padding", "8px 12px")
-            .style("border-radius", "5px")
-            .style("font-size", "12px")
-            .style("pointer-events", "none") // Ensures it doesn't interfere with mouse events
-            .style("opacity", 0); // Initially hidden
+        const allDates = dataByYear.map(d => d.year);
+        const lastDate = d3.max(allDates);
 
-        // 2️⃣ Draw a separate line for each name
+        // Keep track of used y-positions
+        const usedYPositions = [];
+
         groupedCVRData.forEach((values, name) => {
-            svg
-                .append("path")
+            values.sort((a, b) => a.year - b.year);
+
+            const lastPoint = values[values.length - 1];
+            const lastCVR = lastPoint.cvr;
+            let lineColor;
+
+            if (lastCVR > 2) {
+                lineColor = "#115923";
+            } else if (lastCVR < 2) {
+                lineColor = "#ff5151";
+            } else {
+                lineColor = "#C2C5C8";
+            }
+
+            // Draw the line
+            svg.append("path")
                 .datum(values)
                 .attr("fill", "none")
-                // .attr("stroke", "black")
+                .attr("stroke", lineColor)
                 .attr("stroke-width", 2)
-                // .attr("stroke-dasharray", "2,5")
                 .attr(
                     "d",
-                    d3
-                        .line()
+                    d3.line()
                         .x((d) => x(d.year))
                         .y((d) => yRight(d.cvr))
                 );
 
-            svg
-                .append("path")
-                .datum(values)
-                .attr("fill", "none")
-                .attr("stroke", color(name))
-                .attr("stroke-width", 1)
-                .attr(
-                    "d",
-                    d3
-                        .line()
-                        .x((d) => x(d.year))
-                        .y((d) => yRight(d.cvr))
-                );
-
-            // 3️⃣ Add Circles for Each Data Point
-            svg
-                .selectAll(`.cvr-dot-${name.replace(/\W/g, "")}`)
+            // Draw circle markers
+            svg.selectAll(`.cvr-dot-${name.replace(/\W/g, "")}`)
                 .data(values)
                 .enter()
                 .append("circle")
                 .attr("cx", (d) => x(d.year))
                 .attr("cy", (d) => yRight(d.cvr))
-                .attr("r", 6) // Increase radius for better hover interaction
-                .attr("fill", color(name))
+                .attr("r", 5)
+                .attr("fill", lineColor)
                 .attr("stroke", "white")
-                .style("opacity", 1)
-                .attr("stroke-width", 1)
+                .attr("stroke-width", 1);
 
-                // 🎯 Add tooltip event listeners
-                .on("mouseover", (event, d) => {
-                    tooltip.style("opacity", 1).html(`
-            <strong>Page:</strong> ${name}<br>
-            <strong>CVR:</strong> ${d.cvr.toFixed(2)}%
-          `);
-                })
-                .on("mousemove", (event) => {
-                    tooltip
-                        .style("left", event.pageX + 10 + "px")
-                        .style("top", event.pageY - 20 + "px");
-                })
-                .on("mouseout", () => {
-                    tooltip.style("opacity", 0);
-                });
+            // Only add label if it has data for the last date
+            if (+lastPoint.year === +lastDate) {
+                if (lastCVR > 2 || lastCVR < 2) {
 
-            // Sort values by date to ensure the last data point is correct
-            if (
-                name === "/collections/bralettes-for-women" ||
-                name === "/products/nude-bralette" 
-                // name === "/collections/buy-2-get-1-free-bras"
-            ) {
-                // Sort values by date to ensure we get the last data point
-                values.sort((a, b) => a.year - b.year);
-                const lastPoint = values[values.length - 1]; // Get last data point
+                    let labelY = yRight(lastPoint.cvr);
 
-                svg
-                    .append("text")
-                    .attr("x", x(lastPoint.year) + 10) // Position text slightly to the right
-                    .attr("y", yRight(lastPoint.cvr)) // Align with the CVR point
-                    .attr("fill", color(name)) // Match line color
-                    .attr("font-size", "12px")
-                    .attr("font-weight", "bold")
-                    .text(`${lastPoint.cvr.toFixed(2)}%`); // Display CVR value
+                    // Adjust label position to avoid overlapping
+                    while (usedYPositions.some(y => Math.abs(y - labelY) < 10)) {
+                        labelY += 20;  // Move it downward
+                    }
+
+                    usedYPositions.push(labelY); // Store the new Y position
+
+                    // Add text label
+                    svg.append("text")
+                        .attr("x", x(lastPoint.year) + 8)  // Shift right
+                        .attr("y", labelY)
+                        .attr("dy", "0.35em")  // Vertical centering
+                        .attr("fill", lineColor)
+                        .attr("font-size", "12px")
+                        .text(`${name} (${lastPoint.cvr.toFixed(2)}%)`);
+                }
             }
         });
+
     }
 
     return <div id={containerId} />;

@@ -12,6 +12,7 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
     }
 
     console.log("data", data)
+    
     // 1) MARGINS & DIMENSIONS
     const margin = { top: 20, right: 20, bottom: 20, left: 20 };
     const innerWidth = width - margin.left - margin.right;
@@ -275,9 +276,9 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
       .join("path")
       .attr("d", sankeyLinkHorizontal())
       .attr("fill", "none")
-      .attr("stroke", (d) => color(d.source.name))
+      .attr("stroke", (d) => getNodeColor(d.source.name))
       .attr("stroke-width", (d) => Math.max(1, d.width))
-      .attr("opacity", 0.8);
+      .attr("opacity", 0.5);
 
     // 8) DRAW NODES
     const node = container.append("g")
@@ -291,7 +292,7 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
       .attr("y", (d) => d.y0)
       .attr("width", (d) => d.x1 - d.x0)
       .attr("height", (d) => d.y1 - d.y0)
-      .attr("fill", (d) => color(d.name))
+      .attr("fill", (d) => getNodeColor(d.name))
       .attr("stroke", "#000");
 
     node
@@ -300,15 +301,126 @@ function CheaterSankeyDiagram({ data, width, height, isSet }) {
       .attr("y", (d) => (d.y1 + d.y0) / 2)
       .attr("dy", "0.35em")
       .attr("text-anchor", "end")
-      .style("font-size", "17px")
+      .style("font-size", "20px")
       .text((d) => d.name)
       // If node is on left half, label on the right side
       .filter((d) => d.x0 < innerWidth / 2)
       .attr("x", (d) => d.x1 + 6)
       .attr("text-anchor", "start");
+
+
   }, [data, width, height, isSet]);
 
   return <svg ref={svgRef} />;
 }
+
+const partialColorMap = [
+  { keyword: "subscription", color: "#474c5f" },
+  { keyword: "rose", color: "#E6B6B1" },
+  { keyword: "teal", color: "#2B5977" },
+  { keyword: "charisma", color: "#6B1547" },
+  { keyword: "dusty rose", color: "#9D625D" },
+  { keyword: "bourbon", color: "#6F3A21" },
+  { keyword: "mint", color: "#70BB9B" },
+  { keyword: "skyway", color: "#A4C4E9" },
+  { keyword: "pink lady", color: "#EAB5D8" },
+  { keyword: "red plum", color: "#A1353F" },
+  { keyword: "gold dust", color: "#cc9329" },
+  { keyword: "strawberry", color: "#eb9191" }, // sc-strawberry_ice
+  { keyword: "cadet", color: "#907f9f" },
+  { keyword: "blue opal", color: "#0a3e6e" },
+  { keyword: "laurel green", color: "#cbd5bb" },
+  { keyword: "rose clay", color: "#d4aca7" },
+  { keyword: "woodsmoke", color: "#937764" },
+  { keyword: "fallen rock", color: "#9c877a" },
+  { keyword: "black", color: "#171717" },
+  { keyword: "white", color: "#ffffff" },
+  { keyword: "nude", color: "#d1b5a7" },
+  { keyword: "green millieu", color: "#7B938B" },
+  { keyword: "sunkissed", color: "#ba8164" },
+  { keyword: "grey", color: "#bebebe" },
+  { keyword: "provincial blue", color: "#6d99be" },
+  { keyword: "poppy red", color: "#d01b10" },
+  { keyword: "castor grey", color: "#52525b" },
+  { keyword: "blue iris", color: "#717dd7" },
+  { keyword: "fuchsia", color: "#c32e67" },
+  { keyword: "rose dust", color: "#DCBEB9" },
+  { keyword: "lime punch", color: "#d5da3a" },
+  { keyword: "beveled glass", color: "#99d6cd" },
+  { keyword: "fjord blue", color: "#0e90ce" },
+  { keyword: "keepsake lilac", color: "#d7c0c7" },
+  { keyword: "puritan grey", color: "#ced0d6" },
+  { keyword: "castle wall", color: "#d5c3b6" },
+  { keyword: "coral pink", color: "#f2aea0" },
+  { keyword: "raindrop", color: "#cbc7d6" },
+  { keyword: "caribbean sea", color: "#00a7d7" },
+  { keyword: "ocean depths", color: "#018db5" },
+  { keyword: "hyper pink", color: "#ff467f" },
+  { keyword: "cactus", color: "#52713e" },
+  { keyword: "brush", color: "#e2c3b1" },
+  { keyword: "port", color: "#603637" },
+  { keyword: "espresso", color: "#452f24" },
+  { keyword: "roseata fleur", color: "#cd9caa" },
+  { keyword: "brick dust", color: "#A9685E" },
+  { keyword: "peach bloom", color: "#D99B7C" },
+  { keyword: "jacaranda", color: "#A69EBF" },
+  { keyword: "tango", color: "#F0918E" },
+  { keyword: "celestial", color: "#BBC7CE" },
+  { keyword: "claret", color: "#B1382D" },
+  { keyword: "rich mocha", color: "#593229" },
+  { keyword: "zen", color: "#C0C8ED" },
+  { keyword: "oyster", color: "#B1A6AF" },
+  { keyword: "pearl", color: "#E0DCD9" },
+  { keyword: "begonia", color: "#DBA2CB" },
+  { keyword: "olive", color: "#8C8727" },
+  { keyword: "champagne", color: "#A28777" },
+  { keyword: "peacock", color: "#04A8B1" },
+  { keyword: "pistachio", color: "#C9E6E1" },
+  { keyword: "sachet", color: "#E8BDD7" },
+  { keyword: "ethereal", color: "#CAE1EA" },
+  { keyword: "haze", color: "#C4BBBE" },
+  { keyword: "flamingo", color: "#E28B89" },
+  { keyword: "guava", color: "#F5C19E" },
+  { keyword: "lilac", color: "#AE9FC4" },
+  { keyword: "deep ocean", color: "#192443" },
+  { keyword: "eden", color: "#5F5749" },
+  { keyword: "ash rose", color: "#DFA8A0" },
+  { keyword: "butternut", color: "#906C36" },
+  { keyword: "potion", color: "#97234C" },
+  { keyword: "winter sky", color: "#D5E8F6" },
+  { keyword: "tangerine", color: "#EE5347" },
+  { keyword: "lavender fog", color: "#D7CBD4" },
+  { keyword: "grape wine", color: "#47305E" },
+
+  // ---- Mapped Product Names ----
+  { keyword: "strawberry patch", color: "#eb9191" },
+  { keyword: "nude", color: "#d1b5a7" },
+  { keyword: "dreamscape", color: "#A4C4E9" },
+  { keyword: "black", color: "#171717" },
+  { keyword: "lavender fog", color: "#D7CBD4" },
+  { keyword: "grape wine", color: "#47305E" },
+  { keyword: "deep ocean", color: "#192443" },
+  { keyword: "tuscan", color: "#906C36" },
+  { keyword: "champagne", color: "#A28777" },
+  { keyword: "cosmic", color: "#018db5" },
+  { keyword: "granada sky", color: "#018db5" },
+  { keyword: "sunkissed", color: "#ba8164" },
+];
+
+
+function getNodeColor(productName) {
+  const lowerName = productName.toLowerCase();
+
+  // 1) Try partial matches
+  for (const entry of partialColorMap) {
+    if (lowerName.includes(entry.keyword)) {
+      return entry.color; 
+    }
+  }
+
+  // 2) Default fallback if nothing matched
+  return "#ccc";
+}
+
 
 export default CheaterSankeyDiagram;

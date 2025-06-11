@@ -138,8 +138,8 @@ function StackedBars({data}) {
   const productsMap = d3.group(newData, d => d.name);
 
   // 2) Set up chart dimensions and container
-  const width = 300;
-  const height = 400;
+  const width = 400;
+  const height = 500;
   const margin = { top: 30, right: 20, bottom: 50, left: 40 };
 
   const container = d3.select("#products_two").html(""); // clear or use .select() as needed
@@ -199,7 +199,12 @@ function StackedBars({data}) {
     // A color scale for the "layers" (i.e. each date)
     const color = d3.scaleOrdinal()
       .domain(dateKeys.map(String))
-      .range(["#7F8397", "#000000"]);
+      .range(["#A1A5A6", "#000000"]);
+
+    const colorB = d3.scaleOrdinal()
+      .domain(dateKeys.map(String))
+      // .range(["#A1A5A6", "#0593A2"]);
+      .range(["#A1A5A6", "#6e1f37"]);
 
     // G) Create an <svg> for this product
     const svg = container.append("svg")
@@ -224,7 +229,19 @@ function StackedBars({data}) {
       .enter()
       .append("g")
       .attr("class", "layer")
-      .attr("fill", (d, i) => color(String(dateKeys[i])));
+      .attr("fill", (d, i) => {
+         // The product name for this segment
+          // console.log(productName)
+          // Check if the name matches one
+          // if (productName === "Wireless Granada Sky Bralette" || productName === "Tuscan Bralette" || productName === "Dreamscape Relief Bra" || productName === "Black Mesh Bralette" || productName === "Pearl Relief Bra" || productName === "Nude Relief Bra" || productName === "Nude Bralette" || productName === "Black Relief Bra"  || productName === "Black Bralette"){
+          if (productName.includes("Balconette") ){
+              return colorB(String(dateKeys[i]));
+          } else {
+            // Otherwise, use your original color scale
+            return color(String(dateKeys[i]));
+          }
+      }
+    );
 
     bar.selectAll("rect")
       .data(d => d)
@@ -279,6 +296,9 @@ function StackedBars({data}) {
             const labelWidth = 50;
             const labelHeight = 20;
 
+            // console.log("variants ---")
+            // console.log(dRect.data.variant)
+
             // Draw a red rectangle as the background
             d3.select(this.parentNode)
               .append("rect")
@@ -303,7 +323,7 @@ function StackedBars({data}) {
               .text("No Sale");
           }
 
-          if (quantity > 3) {
+          if (quantity > 2 && (dRect.data.variant == "sm" || dRect.data.variant == "md" || dRect.data.variant == "lg")) {
             // Coordinates for our label
             const labelX = x(dRect[0]) + (x(dRect[1]) - x(dRect[0])) / 2;
             const labelY = y(dRect.data.variant) + y.bandwidth() / 2;
@@ -342,7 +362,7 @@ function StackedBars({data}) {
 
   return (
     <div style={{ margin: "2rem" }}>
-      <h1>Products</h1>
+      <h1>Product Sale</h1>
       <div className="mainWrapper">
         <div className="container-filter">
           <p>Type of products</p>
