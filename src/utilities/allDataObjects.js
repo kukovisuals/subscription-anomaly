@@ -96,7 +96,7 @@ export async function subscriptionSales(files) {
     // if ((hasSetSubscription) ) { // || hasFreeBraCode)){ && len < 2){
       // console.log("data before filtering Subscription", items)
       if(hasFreeBraCode){
-        debugger
+        // debugger
       }
       const newCheck = items.filter(d => d.name.includes("Subscription"))
 
@@ -470,9 +470,68 @@ export async function marketingResources([files]) {
 */
 
 // Alternative function to get ALL orders with bundle discount info
+export async function allOrdersWithBundleInfocopy(files) {
+  let allData = [];
+  let newI = 0;
+  // for (const { file, date } of files) {
+    const data = await d3.csv(files, (d) => {
+      // Parse the Lineitem Properties JSON string
+      let lineitemProperties = [];
+      let bundleDiscountPercent = null;
+      let hasBundle = false;
+      
+      try {
+        
+        if (d["Lineitem Properties"] && d["Lineitem Properties"].trim() !== '') {
+          lineitemProperties = JSON.parse(d["Lineitem Properties"]);
+          const bundleDiscount = lineitemProperties.find(prop => prop.name === "_bundleDiscount");
+          if (bundleDiscount) {
+            newI += 1;
+            // console.log(d["Created At"],lineitemProperties, newI);
+            bundleDiscountPercent = +bundleDiscount.value || 0;
+            hasBundle = true;
+          }
+        }
+      } catch (e) {
+        console.warn(`Failed to parse lineitem properties for order ${d["Order Name"]}:`, e);
+      }
+
+      if(!hasBundle)
+        return
+
+      // console.log(d["Order Name"])
+      return {
+        year: "2025-06-06",
+        orderName: d["Order Name"] || "UNKNOWN",
+        createdAt: d["Created At"] || "",
+        source: d["Source"] || "",
+        subtotal: +d["Subtotal"] || 0,
+        total: +d["Total"] || 0,
+        discountAmount: +d["Discount Amount"] || 0,
+        numberOfItems: +d["Number of Line Items"] || 0,
+        numberOfProducts: +d["Number of Products"] || 0,
+        hasBundle: hasBundle,
+        bundleDiscountPercent: bundleDiscountPercent,
+        skus: d["List of Lineitem SKUs"] || "",
+        productNames: d["List of Lineitem Names"] || "",
+        customerOrdersCount: +d["Customer Orders Count"] || 0,
+        customerTotalSpent: +d["Customer Total Spent"] || 0,
+        lineitemProperties: lineitemProperties
+      };
+    });
+    
+    allData.push(...data);
+  // }
+
+  return allData;
+}
+
+
+// Alternative function to get ALL orders with bundle discount info
 export async function allOrdersWithBundleInfo(files) {
   let allData = [];
 
+  let newI = 0;
   for (const { file, date } of files) {
     const data = await d3.csv(file, (d) => {
       // Parse the Lineitem Properties JSON string
@@ -480,11 +539,15 @@ export async function allOrdersWithBundleInfo(files) {
       let bundleDiscountPercent = null;
       let hasBundle = false;
       
+      // console.log(d["Lineitem Properties"]);
       try {
         if (d["Lineitem Properties"] && d["Lineitem Properties"].trim() !== '') {
           lineitemProperties = JSON.parse(d["Lineitem Properties"]);
           const bundleDiscount = lineitemProperties.find(prop => prop.name === "_bundleDiscount");
           if (bundleDiscount) {
+            // newI += 1;
+            // console.log(d["createdAt"], d["Lineitem Properties"], newI);
+
             bundleDiscountPercent = +bundleDiscount.value || 0;
             hasBundle = true;
           }
@@ -521,4 +584,82 @@ export async function allOrdersWithBundleInfo(files) {
   }
 
   return allData;
+}
+
+// utilities ----------------------------------------------------
+/**
+ * Turn any EBY URL into a clean lowercase path – e.g.
+ * https://shop.join-eby.com/products/nude-bralette?variant=123  →
+ * /products/nude-bralette
+ */
+export function normalizePath(urlStr = "") {
+  try {
+    const { pathname } = new URL(urlStr);
+    // 1. lower-case
+    // 2. trim trailing slash
+    // 3. done  →  "/products/nude-bralette"
+    return pathname.replace(/\/$/, "").toLowerCase();
+  } catch {
+    return urlStr.toLowerCase();
+  }
+}
+
+/** Filter rows whose *clean* path contains the target fragment */
+export function filterByPath(rows, target) {
+  const want = normalizePath(
+    target.startsWith("http") ? target : `https://dummy.com${target}`
+  );
+  return rows.filter((r) => r.path.includes(want));
+}
+
+/** Collapse rows that share the same `.path` (+ optional `year`) */
+export function groupRows(rows, { byYear = false } = {}) {
+  const keyFn = (r) => (byYear ? `${r.year}|${r.path}` : r.path);
+
+  const map = new Map();
+  for (const r of rows) {
+    const key = keyFn(r);
+    const agg = map.get(key) ?? {
+      year: r.year,
+      path: r.path,
+      sessions: 0,
+      cartAdditions: 0,
+    };
+    agg.sessions      += r.sessions;
+    agg.cartAdditions += r.cartAdditions;
+    map.set(key, agg);
+  }
+
+  // Finish derived metrics once totals are known
+  return Array.from(map.values()).map((r) => ({
+    ...r,
+    cvr: r.sessions ? (r.cartAdditions / r.sessions) * 100 : 0,
+  }));
+}
+
+// main ---------------------------------------------------------
+export async function marketingSrc(
+  files,
+  { matchPath, rollup = true, byYear = false } = {}
+) {
+  const rows = [];
+
+  for (const { file, date } of files) {
+    const csvRows = await d3.csv(file, (d) => {
+
+      if(d["Landing page URL"].includes("orders") || d["Landing page URL"].includes("checkout"))
+        return
+      return {
+        year: date,
+        url: d["Landing page URL"],
+        path: normalizePath(d["Landing page URL"]),
+        sessions:      +d["Sessions"]                       || 0,
+        cartAdditions: +d["Sessions with cart additions"]   || 0,
+      }
+    });
+    rows.push(...csvRows);
+  }
+
+  const filtered = matchPath ? filterByPath(rows, matchPath) : rows;
+  return rollup ? groupRows(filtered, { byYear }) : filtered;
 }

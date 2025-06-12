@@ -107,7 +107,8 @@ export const fileOrders = [
     // { file: "./data/orders_export_2025-05-21.csv", date: "2025-05-21" },
     // { file: "./data/orders_export_2025-05-22.csv", date: "2025-05-22" },
     // { file: "./data/orders_export_2025-05-23.csv", date: "2025-05-23" },
-    { file: "./data/orders_export_2025-05-26.csv", date: "2025-05-26" }
+    // { file: "./data/orders_export_2025-05-26.csv", date: "2025-05-26" },
+    { file: "./data/orders_export_2025-06-11.csv", date: "2025-06-11" },
   ];
 
 
@@ -218,8 +219,10 @@ export const fileOrders = [
     // { file: "./data/orders_export_2025-05-23.csv", date: "2025-05-23" },
     // { file: "./data/orders_export_2025-05-24.csv", date: "2025-05-24" },
     // { file: "./data/orders_export_2025-05-25.csv", date: "2025-05-25" },
-    { file: "./data/orders_export_2025-05-26.csv", date: "2025-05-26" },
-    { file: "./data/orders_export_2025-05-27.csv", date: "2025-05-27" }
+    // { file: "./data/orders_export_2025-05-26.csv", date: "2025-05-26" },
+    // { file: "./data/orders_export_2025-05-27.csv", date: "2025-05-27" },
+    { file: "./data/orders_export_2025-06-10.csv", date: "2025-06-10" },
+    { file: "./data/orders_export_2025-06-11.csv", date: "2025-06-11" },
 ];
 
 export const landingPageArrs = [
@@ -308,12 +311,15 @@ export const landingPageArrs = [
   // { file: "./data/Sessions by landing page - 2025-06-05 - 2025-06-05.csv", date: "2025-06-05" },
   // { file: "./data/Sessions by landing page - 2025-06-07 - 2025-06-07.csv", date: "2025-06-07" },
   // { file: "./data/Sessions by landing page - 2025-06-08 - 2025-06-08.csv", date: "2025-06-08" },
-  { file: "./data/Sessions by landing page - 2025-06-09 - 2025-06-09.csv", date: "2025-06-09" },
-  { file: "./data/Sessions by landing page - 2025-06-10 - 2025-06-10.csv", date: "2025-06-10" },
+  // { file: "./data/Sessions by landing page - 2025-06-09 - 2025-06-09.csv", date: "2025-06-09" },
+  // { file: "./data/Sessions by landing page - 2025-06-10 - 2025-06-10.csv", date: "2025-06-10" },
+  { file: "./data/Sessions by landing page - 2025-06-11 - 2025-06-11.csv", date: "2025-06-11" },
+  { file: "./data/Sessions by landing page - 2025-06-12 - 2025-06-12.csv", date: "2025-06-12" },
 ]
 
 export const reviewsStamps = [
   // { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_14H54M.csv" },
+  { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_19H4M.csv" },
   { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_19H4M.csv" },
 ];
 
@@ -321,11 +327,12 @@ export const inventoryFiles = [
   { file: "./data/inventory-data.csv", date: "2025-04-02" }
 ];
 
-export const setsBundles = [
+export const sessionRef = [
   { file: "./data/Sessions by referrer + landing page  - 2025-06-03 - 2025-06-03.csv", data: "2025-06-03"},
 ];
 
 export const customBundler = [
-  { file: "./data/eom_shopify_raw_20250528_154638.csv", data: "2025-05-27"}
   // { file: "./data/sets-bundles-results-1.csv", data: "2025-05-27"}
+  // { file: "./data/eom_shopify_raw_20250528_154638.csv", data: "2025-05-27"}
+  { file: "./data/eom_shopify_raw_20250612_121823.csv", data: "2025-05-27"}
 ];

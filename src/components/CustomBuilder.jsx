@@ -19,16 +19,16 @@ function CustomBuilder({ data, containerId }) {
     function drawChart(data) {
         d3.select(`#${containerId}`).selectAll("*").remove();
 
-        console.log("Total data length:", data.length);
+        // console.log("Total data length:", data.length);
 
         // Group orders by bundle type
         const groupedOrders = groupOrdersByBundleType(data);
         console.log("Available bundle types:", Array.from(groupedOrders.keys()));
         
         // Log the count for each group
-        groupedOrders.forEach((orders, key) => {
-            console.log(`"${key}": ${orders.length} orders`);
-        });
+        // groupedOrders.forEach((orders, key) => {
+        //     console.log(`"${key}": ${orders.length} orders`);
+        // });
 
         // Get valid bundle types (exclude empty ones)
         const validBundleTypes = Array.from(groupedOrders.keys()).filter(key => key !== "" && key !== "No Bundle Type");
@@ -180,7 +180,7 @@ function CustomBuilder({ data, containerId }) {
         const avgUnitsPerDay = Math.round(totalUnits / totalDays);
 
         svg.append("text")
-            .attr("x", width / 2)
+            .attr("x", width - 20)
             .attr("y", 20)
             .attr("text-anchor", "end")
             .style("font-size", "12px")
