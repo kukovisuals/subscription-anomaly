@@ -98,7 +98,7 @@ function App() {
 
   if (loading) return <div>Loading data...</div>;
   // console.log(customBuildSet);
-  console.log(marketingData);
+  // console.log(marketingData);
 
   return (
     <div className="app-container">
@@ -175,18 +175,7 @@ function App() {
                 <div className="max-w-6xl mx-auto">
                     <h1 className="text-3xl font-bold text-gray-800 mb-6">Marketing Campaign Analysis</h1>
                     <div className="bg-white p-6 rounded-lg shadow-lg">
-                        <MarketingScatter data={marketingData} width={900} height={600} />
-                    </div>
-                    <div className="mt-6 bg-white p-4 rounded-lg shadow">
-                        <h2 className="text-lg font-semibold mb-2">How to Read This Chart:</h2>
-                        <ul className="text-sm text-gray-600 space-y-1">
-                            <li>• <strong>X-axis:</strong> Number of sessions for each campaign</li>
-                            <li>• <strong>Y-axis:</strong> Conversion rate (CVR) as a percentage</li>
-                            <li>• <strong>Circle size:</strong> Proportional to number of sessions</li>
-                            <li>• <strong>Colors:</strong> Different marketing channels</li>
-                            <li>• <strong>Best performers:</strong> High CVR campaigns (top of chart)</li>
-                            <li>• <strong>High volume:</strong> Campaigns with many sessions (right side)</li>
-                        </ul>
+                        <MarketingScatter data={marketingData} width={900} height={600} containerId="marketing-1"/>
                     </div>
                 </div>
             </div>

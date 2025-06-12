@@ -686,15 +686,21 @@ function detectChannel(urlStr = "", refSource = "", refName = "") {
   // 1 A.  Look at URL query-string
   let channel = "direct"; // sensible default
   try {
-    const u     = new URL(urlStr);
-    const src   = (u.searchParams.get("utm_source") || "").toLowerCase();
-    const m     = u.search.toLowerCase(); // whole query for cheap substring checks
+    const u   = new URL(urlStr);
+    const src = (u.searchParams.get("utm_source") || "").toLowerCase();
+    const m   = urlStr.toLowerCase(); // full URL for looser match
 
+    // --- Priority buckets ---
+    const force = {
+      shopmy: /shopmy/,
+      affiliate: /utm_medium=affiliate|aff(?:id|code)|shareasale|impact|rakuten|avantlink|cj(?=\d)|lkt(?=i|k)/,
+    };
+
+    if (force.shopmy.test(m))     return "shopmy";
+    if (force.affiliate.test(m))  return "affiliate";
+
+    // --- Ranked channel map ---
     const map = [
-      // — Affiliate / influencer platforms
-      ["shopmy",     /shopmy/],
-      ["affiliate",  /utm_medium=affiliate|aff(?:id|code)|shareasale|impact|rakuten|avantlink|cj(?=\d)|lkt(?=i|k)/],
-      // — Social
       ["facebook",   /(^|[._-])fb([._-]|$)|facebook|fbclid/],
       ["instagram",  /instagram|(^|[._-])ig([._-]|$)/],
       ["tiktok",     /(^|[._-])tt([._-]|$)|tiktok/],
@@ -706,38 +712,39 @@ function detectChannel(urlStr = "", refSource = "", refName = "") {
       ["reddit",     /reddit\./],
       ["whatsapp",   /whatsapp/],
       ["messenger",  /messenger/],
-    
-      // — Search / PPC
+
       ["google",     /google|gclid|utm_source=adwords/],
       ["bing",       /bing|utm_source=bing/],
       ["yahoo",      /yahoo/],
       ["duckduckgo", /duckduckgo/],
-    
-      // — Discovery & native
+
       ["outbrain",   /outbrain/],
       ["taboola",    /taboola/],
-    
-      // — Owned channels
+
       ["postscript", /postscript|utm_medium=sms/],
       ["klaviyo",    /klaviyo/],
       ["email",      /utm_medium=email|newsletter|mailchi\.mp|sendgrid|e-?mail/],
       ["sms",        /utm_medium=sms|textmsg/],
-    
-      // — Generic buckets (catch-alls)
+
       ["referral",   /utm_medium=referral/],
       ["display",    /utm_medium=display|banner/],
       ["direct",     /^\(direct\)$|utm_medium=direct/],
     ];
-    
 
     for (const [ch, test] of map) {
-      if (test.test(src) || test.test(m)) return ch;
+      if (test.test(src) || test.test(m)) {
+        return ch;
+      }
     }
-    // 1 B.  Fallback to referrer columns if utm was absent
-    if (/instagram/i.test(refSource + refName)) channel = "instagram";
-    else if (/facebook/i.test(refSource + refName)) channel = "facebook";
-    else if (/tiktok/i.test(refSource + refName)) channel = "tiktok";
-  } catch {/* ignore bad URLs */}
+
+    // --- Fallback to referrer data ---
+    const ref = (refSource + refName).toLowerCase();
+    if (/shopmy/.test(ref)) return "shopmy";
+    // if (/instagram/.test(ref)) return "instagram";
+    // if (/facebook/.test(ref)) return "facebook";
+  } catch {
+    // ignore bad URLs
+  }
   return channel;
 }
 
@@ -747,7 +754,7 @@ function detectChannel(urlStr = "", refSource = "", refName = "") {
 function makeChannelSummary(rows) {
   const out = {};
 
-  console.log(rows);
+  // console.log(rows);
   for (const r of rows) {
     const ch  = detectChannel(r.url, r.referrerSource, r.referrerName);
     const key = r.path;
