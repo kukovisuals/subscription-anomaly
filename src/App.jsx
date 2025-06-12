@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import * as d3 from "d3";
 import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps, sessionRef, customBundler } from './utilities/allFiles';
-import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens, marketingSrc, allOrdersWithBundleInfo } from './utilities/allDataObjects';
+import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens, marketingSrc, allOrdersWithBundleInfo,marketingChannelSummary } from './utilities/allDataObjects';
 
 import CheaterScatterPlot from './components/CheaterScatterPlot';
 import StackedBars from './components/StackProducts';
@@ -70,7 +70,8 @@ function App() {
         const reviewsTextCsv = await reviewsTokens(reviewsStamps);
         // const inventoryDataCsv = await inventoryData(inventoryFiles);
         // const marketingDataCsv = await marketingResources(setsBundles);
-        const marketingDataCsv = await marketingSrc(sessionRef);
+        // const marketingDataCsv = await marketingSrc(sessionRef);
+        const marketingDataCsv = await marketingChannelSummary(sessionRef);
         const customBuildCsv = await allOrdersWithBundleInfo(customBundler);
         
         setSankeyData(suspiciousOrders);

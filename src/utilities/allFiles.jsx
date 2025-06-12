@@ -328,7 +328,7 @@ export const inventoryFiles = [
 ];
 
 export const sessionRef = [
-  { file: "./data/Sessions by referrer + landing page  - 2025-06-03 - 2025-06-03.csv", data: "2025-06-03"},
+  { file: "./data/Sessions by referrer + landing page  - 2025-06-11 - 2025-06-11.csv", data: "2025-06-03"},
 ];
 
 export const customBundler = [

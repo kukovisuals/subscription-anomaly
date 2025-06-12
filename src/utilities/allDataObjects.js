@@ -613,10 +613,17 @@ export function filterByPath(rows, target) {
 }
 
 /** Collapse rows that share the same `.path` (+ optional `year`) */
-export function groupRows(rows, { byYear = false } = {}) {
+export function groupRows(
+  rows,
+  {
+    byYear   = false,   // “2025-04|/products/…” key or just path key
+    sortBy   = "sessions", // any numeric field: "sessions", "cartAdditions", "cvr"
+    desc     = true,    // true = high → low
+  } = {}
+) {
   const keyFn = (r) => (byYear ? `${r.year}|${r.path}` : r.path);
-
-  const map = new Map();
+  const map   = new Map();
+  console.log(rows, "look")
   for (const r of rows) {
     const key = keyFn(r);
     const agg = map.get(key) ?? {
@@ -624,17 +631,22 @@ export function groupRows(rows, { byYear = false } = {}) {
       path: r.path,
       sessions: 0,
       cartAdditions: 0,
+      cvr: r.cvr
     };
     agg.sessions      += r.sessions;
     agg.cartAdditions += r.cartAdditions;
     map.set(key, agg);
   }
 
-  // Finish derived metrics once totals are known
-  return Array.from(map.values()).map((r) => ({
+  // ---- finish derived metrics & sort ----
+  const arr = Array.from(map.values()).map((r) => ({
     ...r,
     cvr: r.sessions ? (r.cartAdditions / r.sessions) * 100 : 0,
   }));
+
+  return arr.sort((a, b) =>
+    desc ? b[sortBy] - a[sortBy] : a[sortBy] - b[sortBy]
+  );
 }
 
 // main ---------------------------------------------------------
@@ -649,12 +661,14 @@ export async function marketingSrc(
 
       if(d["Landing page URL"].includes("orders") || d["Landing page URL"].includes("checkout"))
         return
+
       return {
         year: date,
         url: d["Landing page URL"],
         path: normalizePath(d["Landing page URL"]),
         sessions:      +d["Sessions"]                       || 0,
         cartAdditions: +d["Sessions with cart additions"]   || 0,
+        cvr: +d["Conversion rate"]
       }
     });
     rows.push(...csvRows);
@@ -663,3 +677,158 @@ export async function marketingSrc(
   const filtered = matchPath ? filterByPath(rows, matchPath) : rows;
   return rollup ? groupRows(filtered, { byYear }) : filtered;
 }
+
+
+//--------------------------------------------------------------------
+// 1.  Detect the marketing “channel” for a single row
+//--------------------------------------------------------------------
+function detectChannel(urlStr = "", refSource = "", refName = "") {
+  // 1 A.  Look at URL query-string
+  let channel = "direct"; // sensible default
+  try {
+    const u     = new URL(urlStr);
+    const src   = (u.searchParams.get("utm_source") || "").toLowerCase();
+    const m     = u.search.toLowerCase(); // whole query for cheap substring checks
+
+    const map = [
+      // — Affiliate / influencer platforms
+      ["shopmy",     /shopmy/],
+      ["affiliate",  /utm_medium=affiliate|aff(?:id|code)|shareasale|impact|rakuten|avantlink|cj(?=\d)|lkt(?=i|k)/],
+      // — Social
+      ["facebook",   /(^|[._-])fb([._-]|$)|facebook|fbclid/],
+      ["instagram",  /instagram|(^|[._-])ig([._-]|$)/],
+      ["tiktok",     /(^|[._-])tt([._-]|$)|tiktok/],
+      ["twitter",    /(^|[._-])(tw|x)([._-]|$)|twitter\.com|t\.co/],
+      ["youtube",    /youtu\.?be|(^|[._-])yt([._-]|$)/],
+      ["linkedin",   /linkedin/],
+      ["pinterest",  /pinterest|pinimg/],
+      ["snapchat",   /snapchat|(^|[._-])sc([._-]|$)|snap\.?com/],
+      ["reddit",     /reddit\./],
+      ["whatsapp",   /whatsapp/],
+      ["messenger",  /messenger/],
+    
+      // — Search / PPC
+      ["google",     /google|gclid|utm_source=adwords/],
+      ["bing",       /bing|utm_source=bing/],
+      ["yahoo",      /yahoo/],
+      ["duckduckgo", /duckduckgo/],
+    
+      // — Discovery & native
+      ["outbrain",   /outbrain/],
+      ["taboola",    /taboola/],
+    
+      // — Owned channels
+      ["postscript", /postscript|utm_medium=sms/],
+      ["klaviyo",    /klaviyo/],
+      ["email",      /utm_medium=email|newsletter|mailchi\.mp|sendgrid|e-?mail/],
+      ["sms",        /utm_medium=sms|textmsg/],
+    
+      // — Generic buckets (catch-alls)
+      ["referral",   /utm_medium=referral/],
+      ["display",    /utm_medium=display|banner/],
+      ["direct",     /^\(direct\)$|utm_medium=direct/],
+    ];
+    
+
+    for (const [ch, test] of map) {
+      if (test.test(src) || test.test(m)) return ch;
+    }
+    // 1 B.  Fallback to referrer columns if utm was absent
+    if (/instagram/i.test(refSource + refName)) channel = "instagram";
+    else if (/facebook/i.test(refSource + refName)) channel = "facebook";
+    else if (/tiktok/i.test(refSource + refName)) channel = "tiktok";
+  } catch {/* ignore bad URLs */}
+  return channel;
+}
+
+//--------------------------------------------------------------------
+// 2.  Crunch rows → { path → channel → {sessions, cartAdditions, cvr} }
+//--------------------------------------------------------------------
+function makeChannelSummary(rows) {
+  const out = {};
+
+  console.log(rows);
+  for (const r of rows) {
+    const ch  = detectChannel(r.url, r.referrerSource, r.referrerName);
+    const key = r.path;
+
+    // ---------- ensure the row's CVR is numeric ----------
+    const safeCVR = r.cvr || 0;  // ← NEW
+
+    // ---------- path bucket ----------
+    if (!out[key]) {
+      out[key] = {
+        path: key,
+        totalSessions: 0,
+        totalCartAdditions: 0,
+        cvrSum: 0,
+        cvrCount: 0,
+        channels: {},
+      };
+    }
+    const bucket = out[key];
+
+    bucket.totalSessions      += r.sessions;
+    bucket.totalCartAdditions += r.cartAdditions;
+    bucket.cvrSum             += safeCVR;
+    bucket.cvrCount           += 1;
+
+    // ---------- channel bucket ----------
+    if (!bucket.channels[ch]) {
+      bucket.channels[ch] = {
+        sessions: 0,
+        cartAdditions: 0,
+        cvrSum: 0,
+        cvrCount: 0,
+      };
+    }
+    const cb = bucket.channels[ch];
+    cb.sessions      += r.sessions;
+    cb.cartAdditions += r.cartAdditions;
+    cb.cvrSum        += safeCVR;
+    cb.cvrCount      += 1;
+  }
+
+  // ---------- finalise plain-English metrics ----------
+  for (const b of Object.values(out)) {
+    b.cvr = b.cvrCount ? (b.cvrSum / b.cvrCount) * 100 : 0;
+
+    for (const cb of Object.values(b.channels)) {
+      cb.cvr = cb.cvrCount ? (cb.cvrSum / cb.cvrCount) * 100 : 0;
+      delete cb.cvrSum;
+      delete cb.cvrCount;
+    }
+    delete b.cvrSum;
+    delete b.cvrCount;
+  }
+
+  return out;            // or Object.values(out) if you prefer an array
+}
+
+
+//--------------------------------------------------------------------
+// 3.  Convenience wrapper: rows → summary
+//--------------------------------------------------------------------
+export async function marketingChannelSummary(files, opts = {}) {
+  // keep each raw row so channels can be split
+  const rows = await marketingSrc(files, { ...opts, rollup: false });
+
+  // attach refSource/name if you kept those columns; otherwise strip from detectChannel
+  return makeChannelSummary(rows);
+}
+
+/* --------------  HOW TO USE  --------------
+
+{
+  path: '/collections/best-sellers',
+  totalSessions: 432,
+  totalCartAdditions: 38,
+  cvr: 8.80,
+  channels: {
+    instagram: { sessions: 310, cartAdditions: 25, cvr: 8.06 },
+    facebook:  { sessions:  72, cartAdditions:  5, cvr: 6.94 },
+    shopmy:    { sessions:  24, cartAdditions:  6, cvr: 25.00 },
+    direct:    { sessions:  26, cartAdditions:  2, cvr: 7.69 }
+  }
+}
+------------------------------------------- */
