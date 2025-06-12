@@ -655,24 +655,27 @@ export async function marketingSrc(
   { matchPath, rollup = true, byYear = false } = {}
 ) {
   const rows = [];
-
-  for (const { file, date } of files) {
-    const csvRows = await d3.csv(file, (d) => {
-
+  debugger
+  // for (const { file, date } of files) {
+    // const csvRows = await d3.csv(file, (d) => {
+    const csvRows = files.map((d) => {
       if(d["Landing page URL"].includes("orders") || d["Landing page URL"].includes("checkout"))
         return
-
+  
       return {
-        year: date,
+        // year: date,
+        year: "2025-06-06",
         url: d["Landing page URL"],
         path: normalizePath(d["Landing page URL"]),
         sessions:      +d["Sessions"]                       || 0,
         cartAdditions: +d["Sessions with cart additions"]   || 0,
         cvr: +d["Conversion rate"]
       }
-    });
+    })
+
+    // });
     rows.push(...csvRows);
-  }
+  // }
 
   const filtered = matchPath ? filterByPath(rows, matchPath) : rows;
   return rollup ? groupRows(filtered, { byYear }) : filtered;

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import * as d3 from "d3";
 import { fileOrders, onlyProducts, landingPageArrs, reviewsStamps, sessionRef, customBundler } from './utilities/allFiles';
 import { productSales, subscriptionSales, landingPages, reviewsCleanup, reviewsTokens, marketingSrc, allOrdersWithBundleInfo,marketingChannelSummary } from './utilities/allDataObjects';
@@ -33,28 +33,23 @@ function App() {
 
   const [loading, setLoading] = useState(true);
   const isFirstRender = useRef(true);
+  const [fileData, setFileData] = useState([]);
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
+
+  const handleFiles = useCallback(async (evt) => {
+    const file = evt.target.files?.[0];
     if (!file) return;
-    
-    const fileUrl = URL.createObjectURL(file);
-    
-    try {
-      const rawData = await d3.csv(fileUrl);
-      console.log('File URL:', rawData.length);
-      // const customBuildCsv = await allOrdersWithBundleInfo(fileUrl);
-      const customBuildCsv = await allOrdersWithBundleInfo(customBundler);
-      console.log('File URL:', fileUrl);
-      console.log('CSV Data:', customBuildCsv);
-      setCustomBuildSet(customBuildCsv);
-    } catch (error) {
-      console.error('Error processing CSV:', error);
-    } finally {
-      // Always clean up the URL
-      URL.revokeObjectURL(fileUrl);
-    }
-  };
+
+    /* 1. Read the raw CSV text */
+    const text = await file.text();
+
+    /* 2. Convert raw CSV → array of JS objects (one call to csvParse, no accessor) */
+    const rows = d3.csvParse(text); 
+
+    const parsed = await marketingChannelSummary(rows)
+    setMarketingData(parsed);
+    setFileData(rows);
+  }, []);
 
   useEffect(() => {
     if (!isFirstRender.current) return;
@@ -71,7 +66,7 @@ function App() {
         // const inventoryDataCsv = await inventoryData(inventoryFiles);
         // const marketingDataCsv = await marketingResources(setsBundles);
         // const marketingDataCsv = await marketingSrc(sessionRef);
-        const marketingDataCsv = await marketingChannelSummary(sessionRef);
+        // const marketingDataCsv = await marketingChannelSummary(sessionRef);
         const customBuildCsv = await allOrdersWithBundleInfo(customBundler);
         
         setSankeyData(suspiciousOrders);
@@ -79,7 +74,7 @@ function App() {
         setLandingPagesCn(landingPagesCsv);
         setReviewsData(reviewsCsv);
         setTextReviewsData(reviewsTextCsv);
-        setMarketingData(marketingDataCsv);
+        // setMarketingData(marketingDataCsv);
         setCustomBuildSet(customBuildCsv);
 
         setSankeyDataRelief(suspiciousOrders.filter(order => order.items[0]?.subsType === "Custom Relief Bra Set Subscription Box"));
@@ -98,8 +93,8 @@ function App() {
 
   if (loading) return <div>Loading data...</div>;
   // console.log(customBuildSet);
-  // console.log(marketingData);
-
+  console.log(marketingData); 
+  console.log(fileData, "file data")
   return (
     <div className="app-container">
       <div className="app-wrapper">
@@ -172,6 +167,19 @@ function App() {
         {
           view == "marketing" && (
             <div className="p-6 bg-gray-50 min-h-screen">
+                <section style={{ padding: "1rem", border: "1px solid #ccc" }}>
+                <label htmlFor="csv-input">
+                  <strong>Select CSV file(s)</strong>
+                </label>
+                <input
+                  id="csv-input"
+                  type="file"
+                  accept=".csv"
+                  multiple
+                  onChange={handleFiles}
+                  style={{ display: "block", margin: "1rem 0" }}
+                />
+              </section>
                 <div className="max-w-6xl mx-auto">
                     <h1 className="text-3xl font-bold text-gray-800 mb-6">Marketing Campaign Analysis</h1>
                     <div className="bg-white p-6 rounded-lg shadow-lg">
