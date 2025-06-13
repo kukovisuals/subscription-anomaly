@@ -96,7 +96,7 @@ export async function subscriptionSales(files) {
     // if ((hasSetSubscription) ) { // || hasFreeBraCode)){ && len < 2){
       // console.log("data before filtering Subscription", items)
       if(hasFreeBraCode){
-        debugger
+        // debugger
       }
       const newCheck = items.filter(d => d.name.includes("Subscription"))
 
@@ -120,11 +120,13 @@ export async function subscriptionSales(files) {
   return analyzedOrders;
 }
 
-export async function landingPages(files) {
+export async function landingPages(files, date) {
   let allData = [];
 
-  for (const { file, date } of files) {
-    const data = await d3.csv(file, (d) => {
+  // for (const { file, date } of files) {
+    // const data = await d3.csv(file, (d) => {
+    const data = files.map(d => {
+
       return {
         year: date,
         name: d["Landing page path"] || "UNKNOWN",
@@ -132,9 +134,10 @@ export async function landingPages(files) {
         cartAdditions: +d["Sessions with cart additions"] || 0,
         cvr: +d["Conversion rate"] * 100 || 0, // Ensure it's a number
       };
-    });
+    })
+    // });
     allData.push(...data);
-  }
+  // }
   // Group by date
   return allData
 
@@ -470,9 +473,68 @@ export async function marketingResources([files]) {
 */
 
 // Alternative function to get ALL orders with bundle discount info
+export async function allOrdersWithBundleInfocopy(files) {
+  let allData = [];
+  let newI = 0;
+  // for (const { file, date } of files) {
+    const data = await d3.csv(files, (d) => {
+      // Parse the Lineitem Properties JSON string
+      let lineitemProperties = [];
+      let bundleDiscountPercent = null;
+      let hasBundle = false;
+      
+      try {
+        
+        if (d["Lineitem Properties"] && d["Lineitem Properties"].trim() !== '') {
+          lineitemProperties = JSON.parse(d["Lineitem Properties"]);
+          const bundleDiscount = lineitemProperties.find(prop => prop.name === "_bundleDiscount");
+          if (bundleDiscount) {
+            newI += 1;
+            // console.log(d["Created At"],lineitemProperties, newI);
+            bundleDiscountPercent = +bundleDiscount.value || 0;
+            hasBundle = true;
+          }
+        }
+      } catch (e) {
+        console.warn(`Failed to parse lineitem properties for order ${d["Order Name"]}:`, e);
+      }
+
+      if(!hasBundle)
+        return
+
+      // console.log(d["Order Name"])
+      return {
+        year: "2025-06-06",
+        orderName: d["Order Name"] || "UNKNOWN",
+        createdAt: d["Created At"] || "",
+        source: d["Source"] || "",
+        subtotal: +d["Subtotal"] || 0,
+        total: +d["Total"] || 0,
+        discountAmount: +d["Discount Amount"] || 0,
+        numberOfItems: +d["Number of Line Items"] || 0,
+        numberOfProducts: +d["Number of Products"] || 0,
+        hasBundle: hasBundle,
+        bundleDiscountPercent: bundleDiscountPercent,
+        skus: d["List of Lineitem SKUs"] || "",
+        productNames: d["List of Lineitem Names"] || "",
+        customerOrdersCount: +d["Customer Orders Count"] || 0,
+        customerTotalSpent: +d["Customer Total Spent"] || 0,
+        lineitemProperties: lineitemProperties
+      };
+    });
+    
+    allData.push(...data);
+  // }
+
+  return allData;
+}
+
+
+// Alternative function to get ALL orders with bundle discount info
 export async function allOrdersWithBundleInfo(files) {
   let allData = [];
 
+  let newI = 0;
   for (const { file, date } of files) {
     const data = await d3.csv(file, (d) => {
       // Parse the Lineitem Properties JSON string
@@ -480,11 +542,15 @@ export async function allOrdersWithBundleInfo(files) {
       let bundleDiscountPercent = null;
       let hasBundle = false;
       
+      // console.log(d["Lineitem Properties"]);
       try {
         if (d["Lineitem Properties"] && d["Lineitem Properties"].trim() !== '') {
           lineitemProperties = JSON.parse(d["Lineitem Properties"]);
           const bundleDiscount = lineitemProperties.find(prop => prop.name === "_bundleDiscount");
           if (bundleDiscount) {
+            // newI += 1;
+            // console.log(d["createdAt"], d["Lineitem Properties"], newI);
+
             bundleDiscountPercent = +bundleDiscount.value || 0;
             hasBundle = true;
           }
@@ -522,3 +588,259 @@ export async function allOrdersWithBundleInfo(files) {
 
   return allData;
 }
+
+// utilities ----------------------------------------------------
+/**
+ * Turn any EBY URL into a clean lowercase path – e.g.
+ * https://shop.join-eby.com/products/nude-bralette?variant=123  →
+ * /products/nude-bralette
+ */
+export function normalizePath(urlStr = "") {
+  try {
+    const { pathname } = new URL(urlStr);
+    // 1. lower-case
+    // 2. trim trailing slash
+    // 3. done  →  "/products/nude-bralette"
+    return pathname.replace(/\/$/, "").toLowerCase();
+  } catch {
+    return urlStr.toLowerCase();
+  }
+}
+
+/** Filter rows whose *clean* path contains the target fragment */
+export function filterByPath(rows, target) {
+  const want = normalizePath(
+    target.startsWith("http") ? target : `https://dummy.com${target}`
+  );
+  return rows.filter((r) => r.path.includes(want));
+}
+
+/** Collapse rows that share the same `.path` (+ optional `year`) */
+export function groupRows(
+  rows,
+  {
+    byYear   = false,   // “2025-04|/products/…” key or just path key
+    sortBy   = "sessions", // any numeric field: "sessions", "cartAdditions", "cvr"
+    desc     = true,    // true = high → low
+  } = {}
+) {
+  const keyFn = (r) => (byYear ? `${r.year}|${r.path}` : r.path);
+  const map   = new Map();
+  console.log(rows, "look")
+  for (const r of rows) {
+    const key = keyFn(r);
+    const agg = map.get(key) ?? {
+      year: r.year,
+      path: r.path,
+      sessions: 0,
+      cartAdditions: 0,
+      cvr: r.cvr
+    };
+    agg.sessions      += r.sessions;
+    agg.cartAdditions += r.cartAdditions;
+    map.set(key, agg);
+  }
+
+  // ---- finish derived metrics & sort ----
+  const arr = Array.from(map.values()).map((r) => ({
+    ...r,
+    cvr: r.sessions ? (r.cartAdditions / r.sessions) * 100 : 0,
+  }));
+
+  return arr.sort((a, b) =>
+    desc ? b[sortBy] - a[sortBy] : a[sortBy] - b[sortBy]
+  );
+}
+
+// main ---------------------------------------------------------
+export async function marketingSrc(
+  files,
+  { matchPath, rollup = true, byYear = false } = {}
+) {
+  const rows = [];
+  // for (const { file, date } of files) {
+    // const csvRows = await d3.csv(file, (d) => {
+    const csvRows = files.map((d) => {
+      if(d["Landing page URL"].includes("orders") || d["Landing page URL"].includes("checkout"))
+        return
+  
+      return {
+        // year: date,
+        year: "2025-06-06",
+        url: d["Landing page URL"],
+        path: normalizePath(d["Landing page URL"]),
+        sessions:      +d["Sessions"]                       || 0,
+        cartAdditions: +d["Sessions with cart additions"]   || 0,
+        cvr: +d["Conversion rate"]
+      }
+    })
+
+    // });
+    rows.push(...csvRows);
+  // }
+
+  const filtered = matchPath ? filterByPath(rows, matchPath) : rows;
+  return rollup ? groupRows(filtered, { byYear }) : filtered;
+}
+
+
+//--------------------------------------------------------------------
+// 1.  Detect the marketing “channel” for a single row
+//--------------------------------------------------------------------
+function detectChannel(urlStr = "", refSource = "", refName = "") {
+  // 1 A.  Look at URL query-string
+  let channel = "direct"; // sensible default
+  try {
+    const u   = new URL(urlStr);
+    const src = (u.searchParams.get("utm_source") || "").toLowerCase();
+    const m   = urlStr.toLowerCase(); // full URL for looser match
+
+    // --- Priority buckets ---
+    const force = {
+      shopmy: /shopmy/,
+      affiliate: /utm_medium=affiliate|aff(?:id|code)|shareasale|impact|rakuten|avantlink|cj(?=\d)|lkt(?=i|k)/,
+    };
+
+    if (force.shopmy.test(m))     return "shopmy";
+    if (force.affiliate.test(m))  return "affiliate";
+
+    // --- Ranked channel map ---
+    const map = [
+      ["facebook",   /(^|[._-])fb([._-]|$)|facebook|fbclid/],
+      ["instagram",  /instagram|(^|[._-])ig([._-]|$)/],
+      ["tiktok",     /(^|[._-])tt([._-]|$)|tiktok/],
+      ["twitter",    /(^|[._-])(tw|x)([._-]|$)|twitter\.com|t\.co/],
+      ["youtube",    /youtu\.?be|(^|[._-])yt([._-]|$)/],
+      ["linkedin",   /linkedin/],
+      ["pinterest",  /pinterest|pinimg/],
+      ["snapchat",   /snapchat|(^|[._-])sc([._-]|$)|snap\.?com/],
+      ["reddit",     /reddit\./],
+      ["whatsapp",   /whatsapp/],
+      ["messenger",  /messenger/],
+
+      ["google",     /google|gclid|utm_source=adwords/],
+      ["bing",       /bing|utm_source=bing/],
+      ["yahoo",      /yahoo/],
+      ["duckduckgo", /duckduckgo/],
+
+      ["outbrain",   /outbrain/],
+      ["taboola",    /taboola/],
+
+      ["postscript", /postscript|utm_medium=sms/],
+      ["klaviyo",    /klaviyo/],
+      ["email",      /utm_medium=email|newsletter|mailchi\.mp|sendgrid|e-?mail/],
+      ["sms",        /utm_medium=sms|textmsg/],
+
+      ["referral",   /utm_medium=referral/],
+      ["display",    /utm_medium=display|banner/],
+      ["direct",     /^\(direct\)$|utm_medium=direct/],
+    ];
+
+    for (const [ch, test] of map) {
+      if (test.test(src) || test.test(m)) {
+        return ch;
+      }
+    }
+
+    // --- Fallback to referrer data ---
+    const ref = (refSource + refName).toLowerCase();
+    if (/shopmy/.test(ref)) return "shopmy";
+    // if (/instagram/.test(ref)) return "instagram";
+    // if (/facebook/.test(ref)) return "facebook";
+  } catch {
+    // ignore bad URLs
+  }
+  return channel;
+}
+
+//--------------------------------------------------------------------
+// 2.  Crunch rows → { path → channel → {sessions, cartAdditions, cvr} }
+//--------------------------------------------------------------------
+function makeChannelSummary(rows) {
+  const out = {};
+
+  // console.log(rows);
+  for (const r of rows) {
+    const ch  = detectChannel(r.url, r.referrerSource, r.referrerName);
+    const key = r.path;
+
+    // ---------- ensure the row's CVR is numeric ----------
+    const safeCVR = r.cvr || 0;  // ← NEW
+
+    // ---------- path bucket ----------
+    if (!out[key]) {
+      out[key] = {
+        path: key,
+        totalSessions: 0,
+        totalCartAdditions: 0,
+        cvrSum: 0,
+        cvrCount: 0,
+        channels: {},
+      };
+    }
+    const bucket = out[key];
+
+    bucket.totalSessions      += r.sessions;
+    bucket.totalCartAdditions += r.cartAdditions;
+    bucket.cvrSum             += safeCVR;
+    bucket.cvrCount           += 1;
+
+    // ---------- channel bucket ----------
+    if (!bucket.channels[ch]) {
+      bucket.channels[ch] = {
+        sessions: 0,
+        cartAdditions: 0,
+        cvrSum: 0,
+        cvrCount: 0,
+      };
+    }
+    const cb = bucket.channels[ch];
+    cb.sessions      += r.sessions;
+    cb.cartAdditions += r.cartAdditions;
+    cb.cvrSum        += safeCVR;
+    cb.cvrCount      += 1;
+  }
+
+  // ---------- finalise plain-English metrics ----------
+  for (const b of Object.values(out)) {
+    b.cvr = b.cvrCount ? (b.cvrSum / b.cvrCount) * 100 : 0;
+
+    for (const cb of Object.values(b.channels)) {
+      cb.cvr = cb.cvrCount ? (cb.cvrSum / cb.cvrCount) * 100 : 0;
+      delete cb.cvrSum;
+      delete cb.cvrCount;
+    }
+    delete b.cvrSum;
+    delete b.cvrCount;
+  }
+
+  return out;            // or Object.values(out) if you prefer an array
+}
+
+
+//--------------------------------------------------------------------
+// 3.  Convenience wrapper: rows → summary
+//--------------------------------------------------------------------
+export async function marketingChannelSummary(files, opts = {}) {
+  // keep each raw row so channels can be split
+  const rows = await marketingSrc(files, { ...opts, rollup: false });
+
+  // attach refSource/name if you kept those columns; otherwise strip from detectChannel
+  return makeChannelSummary(rows);
+}
+
+/* --------------  HOW TO USE  --------------
+
+{
+  path: '/collections/best-sellers',
+  totalSessions: 432,
+  totalCartAdditions: 38,
+  cvr: 8.80,
+  channels: {
+    instagram: { sessions: 310, cartAdditions: 25, cvr: 8.06 },
+    facebook:  { sessions:  72, cartAdditions:  5, cvr: 6.94 },
+    shopmy:    { sessions:  24, cartAdditions:  6, cvr: 25.00 },
+    direct:    { sessions:  26, cartAdditions:  2, cvr: 7.69 }
+  }
+}
+------------------------------------------- */
