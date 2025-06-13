@@ -761,6 +761,10 @@ function makeChannelSummary(rows) {
 
   // console.log(rows);
   for (const r of rows) {
+    // console.log("sisis", r)
+    if(!r){
+      break;
+    }
     const ch  = detectChannel(r.url, r.referrerSource, r.referrerName);
     const key = r.path;
 
