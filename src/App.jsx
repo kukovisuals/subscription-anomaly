@@ -50,6 +50,29 @@ function App() {
     setMarketingData(parsed);
     setFileData(rows);
   }, []);
+  
+  const handleFilesPages = useCallback(async (evt) => {
+    const files = Array.from(evt.target.files ?? []);
+    if (!files.length) return;
+
+    const allParsed = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const csvText = await file.text();
+      const rows = d3.csvParse(csvText);
+
+      // Force date based on index: 0 = yesterday, 1 = two days ago, etc.
+      const forceDate = new Date();
+      forceDate.setDate(forceDate.getDate() - (i + 1)); // yesterday = i+1
+
+      const parsed = await landingPages(rows, forceDate);
+      allParsed.push(...parsed); // combine all files into one array
+    }
+
+    setLandingPagesCn(allParsed);
+  }, []);
+
 
   useEffect(() => {
     if (!isFirstRender.current) return;
@@ -60,9 +83,9 @@ function App() {
       try {
         const suspiciousOrders = await subscriptionSales(fileOrders);
         const productOrders = await productSales(onlyProducts);
-        const landingPagesCsv = await landingPages(landingPageArrs);
         const reviewsCsv = await reviewsCleanup(reviewsStamps);
         const reviewsTextCsv = await reviewsTokens(reviewsStamps);
+        // const landingPagesCsv = await landingPages(landingPageArrs);
         // const inventoryDataCsv = await inventoryData(inventoryFiles);
         // const marketingDataCsv = await marketingResources(setsBundles);
         // const marketingDataCsv = await marketingSrc(sessionRef);
@@ -71,10 +94,10 @@ function App() {
         
         setSankeyData(suspiciousOrders);
         setProductData(productOrders);
-        setLandingPagesCn(landingPagesCsv);
         setReviewsData(reviewsCsv);
         setTextReviewsData(reviewsTextCsv);
         // setMarketingData(marketingDataCsv);
+        // setLandingPagesCn(landingPagesCsv);
         setCustomBuildSet(customBuildCsv);
 
         setSankeyDataRelief(suspiciousOrders.filter(order => order.items[0]?.subsType === "Custom Relief Bra Set Subscription Box"));
@@ -93,16 +116,16 @@ function App() {
 
   if (loading) return <div>Loading data...</div>;
   // console.log(customBuildSet);
-  console.log(marketingData); 
-  console.log(fileData, "file data")
+  // console.log(marketingData); 
+  // console.log(fileData, "file data")
   return (
     <div className="app-container">
       <div className="app-wrapper">
 
         {/* Navigation Menu */}
         <div className="menu">
-          <button className="menu-first-child" onClick={() => setView("products")}>Products</button>
-          <button onClick={() => setView("landingPages")}>Landing Pages</button>
+          <button className="menu-first-child" onClick={() => setView("landingPages")}>Landing Pages</button>
+          <button onClick={() => setView("products")}>Products</button>
           <button onClick={() => setView("subscriptions")}>Subscriptions</button>
           <button onClick={() => setView("bundler")}>bundler</button>
           <button onClick={() => setView("marketing")}>marketing</button>
@@ -111,15 +134,25 @@ function App() {
       </div>
       <div className="dashboard-container">
 
-        {/* Render based on selected view */}
-        {view === "products" && (
+      {view === "landingPages" && (
           <div>
-            <StackedBars data={productData} />
-          </div>
-        )}
-
-        {view === "landingPages" && (
-          <div>
+            <section style={{ padding: "1rem", border: "1px solid #ccc" }}>
+              <label htmlFor="csv-input">
+                <strong>Select Both files</strong>
+                <p>1st file must be yesterday</p>
+                <p>2nd file must be two days ago</p>
+                <p>ei. Sessions by landing page - 2025-06-10 - 2025-06-10</p>
+                <a href="https://admin.shopify.com/store/eby-by-sofia-vergara/analytics/reports/135004204?ql=FROM+sessions%0A++SHOW+online_store_visitors%2C+sessions%2C+sessions_with_cart_additions%2C%0A++++sessions_that_reached_checkout%2C+conversion_rate%0A++WHERE+landing_page_path+IS+NOT+NULL%0A++GROUP+BY+landing_page_type%2C+landing_page_path+WITH+TOTALS%2C+PERCENT_CHANGE%0A++DURING+yesterday%0A++COMPARE+TO+previous_period%0A++ORDER+BY+sessions+DESC%0A++LIMIT+1000%0AVISUALIZE+sessions%2C+online_store_visitors%2C+sessions_with_cart_additions%2C%0A++sessions_that_reached_checkout+TYPE+list_with_dimension_values">Link for report</a>
+              </label>
+              <input
+                id="csv-input"
+                type="file"
+                accept=".csv"
+                multiple
+                onChange={handleFilesPages}
+                style={{ display: "block", margin: "1rem 0" }}
+              />
+            </section>
             <h2>Landing Pages - Cart sessions over 100/day</h2>
             <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions > 100)} containerId="chart-high" />
             <h3>Sessions</h3>
@@ -138,6 +171,12 @@ function App() {
             <LandingsBars data={landingPagesCn.filter(d => d.cartAdditions < 10 && d.cartAdditions > 5)} containerId="bar-chart-low-low" />
             {/* <h2>Landing Pages - Cart sessions 10-50/day</h2>
             <LandingPagesLine data={landingPagesCn.filter(d => d.cartAdditions < 20 && d.cartAdditions > 10)} containerId="chart-low-low" /> */}
+          </div>
+        )}
+
+        {view === "products" && (
+          <div>
+            <StackedBars data={productData} />
           </div>
         )}
 
@@ -170,6 +209,8 @@ function App() {
                 <section style={{ padding: "1rem", border: "1px solid #ccc" }}>
                 <label htmlFor="csv-input">
                   <strong>Select CSV file(s)</strong>
+                  <p>ei. Sessions by referrer + landing page  - 2025-06-11 - 2025-06-11.csv</p>
+                  <a href="https://admin.shopify.com/store/eby-by-sofia-vergara/analytics/reports/57999404?ql=FROM+sessions%0A++SHOW+online_store_visitors%2C+sessions%2C+conversion_rate%2C%0A++++sessions_with_cart_additions%0A++WHERE+landing_page_url+CONTAINS+%27%2Fproducts%2Fblack-and-nude-relief-bra-bundle%27%0A++GROUP+BY+referrer_source%2C+referrer_name%2C+session_region%2C+landing_page_url+WITH%0A++++TOTALS%0A++SINCE+yesterday+UNTIL+yesterday%0A++ORDER+BY+sessions+DESC%0A++LIMIT+1000%0AVISUALIZE+sessions+TYPE+horizontal_bar">Report link</a>
                 </label>
                 <input
                   id="csv-input"
@@ -179,6 +220,7 @@ function App() {
                   onChange={handleFiles}
                   style={{ display: "block", margin: "1rem 0" }}
                 />
+                
               </section>
                 <div className="max-w-6xl mx-auto">
                     <h1 className="text-3xl font-bold text-gray-800 mb-6">Marketing Campaign Analysis</h1>

@@ -120,11 +120,13 @@ export async function subscriptionSales(files) {
   return analyzedOrders;
 }
 
-export async function landingPages(files) {
+export async function landingPages(files, date) {
   let allData = [];
 
-  for (const { file, date } of files) {
-    const data = await d3.csv(file, (d) => {
+  // for (const { file, date } of files) {
+    // const data = await d3.csv(file, (d) => {
+    const data = files.map(d => {
+
       return {
         year: date,
         name: d["Landing page path"] || "UNKNOWN",
@@ -132,9 +134,10 @@ export async function landingPages(files) {
         cartAdditions: +d["Sessions with cart additions"] || 0,
         cvr: +d["Conversion rate"] * 100 || 0, // Ensure it's a number
       };
-    });
+    })
+    // });
     allData.push(...data);
-  }
+  // }
   // Group by date
   return allData
 
@@ -655,7 +658,6 @@ export async function marketingSrc(
   { matchPath, rollup = true, byYear = false } = {}
 ) {
   const rows = [];
-  debugger
   // for (const { file, date } of files) {
     // const csvRows = await d3.csv(file, (d) => {
     const csvRows = files.map((d) => {
