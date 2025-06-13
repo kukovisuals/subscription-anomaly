@@ -689,7 +689,7 @@ export async function marketingSrc(
 //--------------------------------------------------------------------
 function detectChannel(urlStr = "", refSource = "", refName = "") {
   // 1 A.  Look at URL query-string
-  let channel = "direct"; // sensible default
+  let channel = "missing"; // sensible default
   try {
     const u   = new URL(urlStr);
     const src = (u.searchParams.get("utm_source") || "").toLowerCase();
@@ -706,19 +706,19 @@ function detectChannel(urlStr = "", refSource = "", refName = "") {
 
     // --- Ranked channel map ---
     const map = [
-      ["facebook",   /(^|[._-])fb([._-]|$)|facebook|fbclid/],
-      ["instagram",  /instagram|(^|[._-])ig([._-]|$)/],
       ["tiktok",     /(^|[._-])tt([._-]|$)|tiktok/],
       ["twitter",    /(^|[._-])(tw|x)([._-]|$)|twitter\.com|t\.co/],
-      ["youtube",    /youtu\.?be|(^|[._-])yt([._-]|$)/],
+      ["youtube",    /adwords/],
       ["linkedin",   /linkedin/],
       ["pinterest",  /pinterest|pinimg/],
       ["snapchat",   /snapchat|(^|[._-])sc([._-]|$)|snap\.?com/],
       ["reddit",     /reddit\./],
       ["whatsapp",   /whatsapp/],
       ["messenger",  /messenger/],
+      ["grin",       /grin/],
+      ["organic",    /organicsocial/],
 
-      ["google",     /google|gclid|utm_source=adwords/],
+      ["google",     /google|gclid/],
       ["bing",       /bing|utm_source=bing/],
       ["yahoo",      /yahoo/],
       ["duckduckgo", /duckduckgo/],
@@ -731,13 +731,28 @@ function detectChannel(urlStr = "", refSource = "", refName = "") {
       ["email",      /utm_medium=email|newsletter|mailchi\.mp|sendgrid|e-?mail/],
       ["sms",        /utm_medium=sms|textmsg/],
 
+      ["facebook",   /(^|[._-])fb([._-]|$)|facebook|fbclid/],
+      ["instagram",  /instagram|(^|[._-])ig([._-]|$)/],
+
       ["referral",   /utm_medium=referral/],
       ["display",    /utm_medium=display|banner/],
       ["direct",     /^\(direct\)$|utm_medium=direct/],
     ];
 
+    // if(m.includes("adwords")){
+    //   debugger
+    // }
+    if(!m.includes("grin")){
+      console.log(m.split("?")[1])
+    }
+
     for (const [ch, test] of map) {
-      if (test.test(src) || test.test(m)) {
+      if(m.includes("adword")){
+        return "adwords";
+      }
+      if (test.test(m)) {
+        const newvart = ch;
+        
         return ch;
       }
     }

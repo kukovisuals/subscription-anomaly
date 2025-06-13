@@ -40,15 +40,19 @@ function App() {
     const file = evt.target.files?.[0];
     if (!file) return;
 
-    /* 1. Read the raw CSV text */
-    const text = await file.text();
+    try{
+      const arrayBuffer = await file.arrayBuffer();
+      const decoder = new TextDecoder('windows-1252'); // or 'iso-8859-1'
+      const text = decoder.decode(arrayBuffer);
 
-    /* 2. Convert raw CSV → array of JS objects (one call to csvParse, no accessor) */
-    const rows = d3.csvParse(text); 
+      const rows = d3.csvParse(text); 
 
-    const parsed = await marketingChannelSummary(rows)
-    setMarketingData(parsed);
-    setFileData(rows);
+      const parsed = await marketingChannelSummary(rows)
+      setMarketingData(parsed);
+      setFileData(rows);
+    } catch (err) {
+      console.error("Error in marketing", err);
+    }
   }, []);
   
   const handleFilesPages = useCallback(async (evt) => {
@@ -141,7 +145,6 @@ function App() {
                 <strong>Select Both files</strong>
                 <p>1st file must be yesterday</p>
                 <p>2nd file must be two days ago</p>
-                <p>ei. Sessions by landing page - 2025-06-10 - 2025-06-10</p>
                 <a href="https://admin.shopify.com/store/eby-by-sofia-vergara/analytics/reports/135004204?ql=FROM+sessions%0A++SHOW+online_store_visitors%2C+sessions%2C+sessions_with_cart_additions%2C%0A++++sessions_that_reached_checkout%2C+conversion_rate%0A++WHERE+landing_page_path+IS+NOT+NULL%0A++GROUP+BY+landing_page_type%2C+landing_page_path+WITH+TOTALS%2C+PERCENT_CHANGE%0A++DURING+yesterday%0A++COMPARE+TO+previous_period%0A++ORDER+BY+sessions+DESC%0A++LIMIT+1000%0AVISUALIZE+sessions%2C+online_store_visitors%2C+sessions_with_cart_additions%2C%0A++sessions_that_reached_checkout+TYPE+list_with_dimension_values">Link for report</a>
               </label>
               <input
@@ -209,7 +212,6 @@ function App() {
                 <section style={{ padding: "1rem", border: "1px solid #ccc" }}>
                 <label htmlFor="csv-input">
                   <strong>Select CSV file(s)</strong>
-                  <p>ei. Sessions by referrer + landing page  - 2025-06-11 - 2025-06-11.csv</p>
                   <a href="https://admin.shopify.com/store/eby-by-sofia-vergara/analytics/reports/57999404?ql=FROM+sessions%0A++SHOW+online_store_visitors%2C+sessions%2C+conversion_rate%2C%0A++++sessions_with_cart_additions%0A++WHERE+landing_page_url+CONTAINS+%27%2Fproducts%2Fblack-and-nude-relief-bra-bundle%27%0A++GROUP+BY+referrer_source%2C+referrer_name%2C+session_region%2C+landing_page_url+WITH%0A++++TOTALS%0A++SINCE+yesterday+UNTIL+yesterday%0A++ORDER+BY+sessions+DESC%0A++LIMIT+1000%0AVISUALIZE+sessions+TYPE+horizontal_bar">Report link</a>
                 </label>
                 <input

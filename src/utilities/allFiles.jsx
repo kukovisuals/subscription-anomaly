@@ -319,7 +319,7 @@ export const landingPageArrs = [
 
 export const reviewsStamps = [
   // { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_14H54M.csv" },
-  { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_19H4M.csv" },
+  // { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_19H4M.csv" },
   { file: "./data/EBY by Sofia Vergara reviews_export 27-2-2025_19H4M.csv" },
 ];
 
@@ -328,7 +328,7 @@ export const inventoryFiles = [
 ];
 
 export const sessionRef = [
-  { file: "./data/Sessions by referrer + landing page  - 2025-06-11 - 2025-06-11.csv", data: "2025-06-03"},
+  { file: "./data/Sessions by referrer + landing page  - 2025-06-12 - 2025-06-12.csv", data: "2025-06-03"},
 ];
 
 export const customBundler = [
